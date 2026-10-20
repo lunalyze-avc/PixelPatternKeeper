@@ -1,0 +1,2426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pixel Pattern Keeper</title>
+<style>
+:root {
+  --bg: #f4f2ee;
+  --panel: #ffffff;
+  --panel-2: #f1eee9;
+  --text: #1e1d1b;
+  --muted: #6c6862;
+  --line: #e2ded7;
+  --accent: #b8323b;
+  --accent-ink: #ffffff;
+  --focus: #2f6fde;
+  --stage: #2a2b30;
+  --hi: #ffd23f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131315;
+    --panel: #1c1c20;
+    --panel-2: #26262b;
+    --text: #ecebe8;
+    --muted: #a19e98;
+    --line: #34343b;
+    --accent: #e0545d;
+    --stage: #202125;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131315;
+  --panel: #1c1c20;
+  --panel-2: #26262b;
+  --text: #ecebe8;
+  --muted: #a19e98;
+  --line: #34343b;
+  --accent: #e0545d;
+  --stage: #202125;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+button, select, input { font: inherit; color: inherit; }
+button {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 11px;
+  cursor: pointer;
+  min-height: 34px;
+}
+button:hover { border-color: var(--muted); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.danger-text { color: var(--accent); }
+button.toggle[aria-pressed="true"] { background: var(--hi); color: #222; border-color: var(--hi); }
+select, input[type="number"], input:not([type]), input[type="text"] {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-height: 34px;
+  min-width: 0;
+}
+input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: .01em; }
+.logo {
+  width: 20px; height: 20px; border-radius: 4px;
+  background:
+    linear-gradient(135deg, transparent 49%, var(--accent) 49% 51%, transparent 51%),
+    conic-gradient(var(--text) 25%, var(--panel-2) 0 50%, var(--text) 0 75%, var(--panel-2) 0) 0 0 / 10px 10px;
+}
+.group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+#projectSelect { max-width: 220px; }
+.tools button { display: inline-flex; align-items: center; gap: 6px; }
+.tools svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tools button[aria-pressed="true"] { background: var(--text); color: var(--panel); border-color: var(--text); }
+.paint-box {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px;
+  border: 1px solid var(--line); border-radius: 11px; background: var(--panel-2);
+}
+.paint-box > button:not([aria-pressed="true"]) { background: transparent; border-color: transparent; }
+.paint-well {
+  position: relative; width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+  border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--muted); overflow: hidden; flex: none;
+}
+.paint-well input { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); opacity: 0; cursor: pointer; }
+.pal-pop-btn { min-width: 26px; padding: 0 4px; }
+.pal-pop {
+  position: fixed; z-index: 40; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 6px; box-shadow: 0 8px 30px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 2px;
+  min-width: 180px; max-height: 60vh; overflow-y: auto;
+}
+.pal-pick { display: flex; align-items: center; gap: 8px; text-align: left; background: transparent; border-color: transparent; }
+.pal-pick i { width: 20px; height: 20px; border-radius: 5px; border: 1px solid rgba(128,128,128,.6); }
+.pal-pick.sel { border-color: var(--text); background: var(--panel-2); }
+
+.sub-head { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 2px; }
+.edge-line { display: grid; grid-template-columns: 92px repeat(4, 1fr); align-items: center; gap: 5px; }
+.edge-line > b { font-size: 13px; font-weight: 600; }
+.edge-line button { padding: 6px 2px; font-size: 13px; }
+
+.new-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px; text-align: left; }
+.choice span { font-size: 12.5px; color: var(--muted); }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12.5px; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.style-set { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 10px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.style-set legend { font-size: 12.5px; color: var(--muted); padding: 0 4px; }
+
+main { flex: 1; display: flex; min-height: 0; }
+#stage { position: relative; flex: 1; min-width: 0; background: var(--stage); overflow: hidden; touch-action: none; }
+#canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+#canvas.tool-pan { cursor: grab; }
+#canvas.grabbing { cursor: grabbing; }
+
+.hover-info {
+  position: absolute; left: 10px; top: 10px;
+  background: rgba(0,0,0,.72); color: #fff;
+  padding: 5px 9px; border-radius: 6px; font-size: 12px; pointer-events: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.hover-info i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid rgba(255,255,255,.5); }
+.zoom-ctl {
+  position: absolute; right: 10px; bottom: 10px;
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+}
+.zoom-ctl button { background: rgba(28,28,32,.85); color: #fff; border-color: rgba(255,255,255,.18); min-width: 38px; }
+
+.empty {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; color: #eee; padding: 24px;
+}
+.empty h1 { margin: 0 0 6px; font-size: 26px; }
+.empty p { margin: 0 0 18px; color: #bbb; max-width: 420px; }
+
+#sidebar {
+  width: 370px; flex: none;
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+details.card > summary { cursor: pointer; font-weight: 650; list-style: none; display: flex; justify-content: space-between; }
+details.card > summary::after { content: "▾"; color: var(--muted); }
+details.card:not([open]) > summary::after { content: "▸"; }
+details.card:not([open]) { gap: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.btnrow { display: flex; gap: 8px; }
+.btnrow > button { flex: 1; }
+.btnrow.wrap { flex-wrap: wrap; }
+.btnrow.wrap > button { flex: 1 1 140px; }
+.check { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.check input { margin-top: 3px; accent-color: var(--accent); }
+.range { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--muted); }
+.range input { accent-color: var(--accent); }
+.field { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--muted); }
+.field > input, .field > select { color: var(--text); width: 100%; }
+.grid2 > *, .grid4 > * { min-width: 0; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.self-end { align-self: end; }
+
+/* row card */
+.row-card { border-color: var(--hi); box-shadow: 0 0 0 1px var(--hi) inset; }
+.row-head { display: flex; align-items: center; gap: 8px; }
+.row-head > button { font-size: 22px; line-height: 1; width: 44px; min-height: 44px; padding: 0; }
+.row-title { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 18px; font-weight: 650; }
+.row-title .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+#rowInput { width: 76px; text-align: center; font-weight: 700; font-size: 18px; }
+.row-meta { font-size: 13px; color: var(--muted); text-align: center; }
+.row-meta b { color: var(--text); }
+.strip-wrap { background: var(--stage); border-radius: 10px; padding: 6px 6px 8px; }
+.strip-ends { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #b9b9be; padding: 0 2px 5px; }
+.strip-arrow { color: var(--hi); font-weight: 700; font-size: 12px; }
+.strip { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 4px; scroll-behavior: smooth; position: relative; }
+.strip button {
+  flex: none; width: 28px; height: 28px; min-height: 0; padding: 0;
+  border-radius: 4px; border: 1px solid rgba(255,255,255,.18);
+  font-size: 10.5px; font-weight: 700; position: relative;
+}
+.strip button.done::after {
+  content: "✓"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(40,40,44,.55); color: #fff; font-size: 15px; border-radius: 3px;
+}
+.strip button.next { outline: 3px solid var(--hi); outline-offset: -1px; z-index: 1; }
+.runs { display: flex; flex-wrap: wrap; gap: 5px; max-height: 132px; overflow-y: auto; margin-top: -4px; position: relative; }
+.run {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px 2px 3px; font-size: 13px; background: var(--panel-2);
+}
+.run i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128,128,128,.6); display: inline-block; }
+.run b { font-variant-numeric: tabular-nums; }
+.run.done { opacity: .45; text-decoration: line-through; }
+.run.current { border-color: var(--hi); box-shadow: 0 0 0 1px var(--hi) inset; }
+.run .arrow { color: var(--muted); }
+.next-stitch { font-size: 15px; text-align: center; padding: 4px 0; }
+.next-stitch i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; vertical-align: -2px; border: 1px solid rgba(128,128,128,.6); margin: 0 3px; }
+.row-card .btnrow button { min-height: 42px; }
+.progress { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
+#progBar { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+/* palette */
+.palette { display: flex; flex-direction: column; gap: 6px; }
+.pal-row { display: grid; grid-template-columns: 34px 44px 1fr auto 32px; gap: 6px; align-items: center; padding: 3px; border-radius: 9px; border: 1px solid transparent; }
+.pal-row.sel { border-color: var(--text); background: var(--panel-2); }
+.pal-row .swatch { width: 34px; height: 34px; padding: 0; border-radius: 8px; border: 1px solid rgba(128,128,128,.5); }
+.pal-row .count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.pal-row .del { padding: 0; width: 32px; color: var(--muted); }
+.pal-row input.name { width: 100%; }
+
+.help { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+
+/* dialogs */
+dialog { border: 1px solid var(--line); border-radius: 14px; padding: 0; background: var(--panel); color: var(--text); max-width: calc(100vw - 24px); }
+dialog::backdrop { background: rgba(0,0,0,.5); }
+.dlg { padding: 18px; display: flex; flex-direction: column; gap: 12px; width: 420px; max-width: 100%; }
+.dlg.wide { width: 820px; }
+.dlg h2 { margin: 0; font-size: 18px; }
+.dlg menu { display: flex; justify-content: flex-end; gap: 8px; margin: 0; padding: 0; }
+.dlg details summary { cursor: pointer; color: var(--muted); }
+.dlg details { display: flex; flex-direction: column; gap: 8px; }
+.previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.previews figure { margin: 0; background: var(--stage); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.previews canvas { max-width: 100%; height: auto; image-rendering: pixelated; }
+.previews figcaption { font-size: 12px; color: #bbb; }
+.imp-pal { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.line-menu {
+  position: absolute; z-index: 5; background: var(--panel); color: var(--text);
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px; width: 300px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 8px;
+}
+.line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.line-grid button { padding: 6px 4px; font-size: 12.5px; }
+button.primary.danger { background: #b3261e; border-color: #b3261e; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  background: #1e1e22; color: #fff; padding: 10px 16px; border-radius: 10px; z-index: 50;
+  box-shadow: 0 6px 24px rgba(0,0,0,.35); max-width: calc(100vw - 32px);
+}
+.toast.bad { background: var(--accent); }
+
+/* ------------------------------------------------------------ responsive layout */
+.file-group { position: relative; }
+.file-btns { display: contents; }
+.more-btn { display: none; }
+dialog { max-height: calc(100dvh - 24px); overflow: auto; }
+.topbar { padding-top: max(8px, env(safe-area-inset-top)); padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+
+/* landscape tablets and small laptops: keep the side panel, a little narrower */
+@media (max-width: 1180px) {
+  #sidebar { width: 320px; }
+  .brand { display: none; }
+}
+
+/* phones and portrait tablets: panels go below the pattern and the page scrolls */
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
+  body { overflow: auto; height: auto; min-height: 100%; }
+  .topbar { position: sticky; top: 0; z-index: 20; }
+  main { flex-direction: column; }
+  #stage { flex: none; height: 62vh; height: 62dvh; }
+  #sidebar { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; padding: 10px max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  .grid4 { grid-template-columns: 1fr 1fr; }
+  .previews { grid-template-columns: 1fr; }
+}
+/* portrait tablets have room for two columns of panels */
+@media (orientation: portrait) and (min-width: 700px) and (max-width: 1100px) {
+  #sidebar { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  #sidebar > .panels-toggle { grid-column: 1 / -1; }
+  #sidebar > .row-card { grid-row: span 3; }
+}
+
+/* phones: icons only, and the file buttons fold into "More" */
+@media (max-width: 600px) {
+  .topbar { gap: 6px; padding-bottom: 6px; }
+  .tools button span { display: none; }
+  .group { gap: 4px; }
+  #projectSelect { max-width: 150px; }
+  .more-btn { display: inline-block; }
+  .file-btns {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 6px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.35); flex-direction: column; gap: 4px; min-width: 190px;
+  }
+  .file-btns.open { display: flex; }
+  .file-btns button { text-align: left; }
+  .file-btns .phone-only { display: block; }
+  #btnClearCanvas { display: none; }
+  /* two rows: patterns + undo on top, all the tools underneath */
+  .file-group { order: 1; }
+  .edit-group { order: 2; margin-left: auto; }
+  .tools { order: 3; width: 100%; flex-wrap: nowrap; justify-content: space-between; }
+  .tools > button, .paint-box > button { padding: 0 9px; min-width: 40px; }
+  .paint-box { gap: 2px; padding: 2px; }
+  #projectSelect { max-width: 120px; }
+  .dlg { padding: 14px; }
+  .new-choices { grid-template-columns: 1fr; }
+  .edge-line { grid-template-columns: 84px repeat(4, 1fr); }
+  .line-menu { width: min(300px, calc(100% - 16px)); }
+}
+
+/* touch screens: bigger targets */
+@media (pointer: coarse) {
+  button, select, input[type="number"], input:not([type]), input[type="text"] { min-height: 42px; }
+  /* quick repeated taps (Stitch done, Stitch done…) must not double-tap-zoom the page */
+  button, .strip, .row-card { touch-action: manipulation; }
+  .strip button { width: 34px; height: 34px; min-height: 0; font-size: 11.5px; }
+  .paint-well { width: 40px; height: 40px; }
+  .pal-pop-btn { min-width: 34px; }
+  .zoom-ctl button { min-width: 44px; }
+  .check input { width: 20px; height: 20px; margin-top: 0; }
+  .check { align-items: center; min-height: 34px; }
+  .hover-info { display: none; }
+}
+.inline { display: flex; gap: 6px; }
+.inline > input { flex: 1; min-width: 0; }
+.inline > button { flex: none; }
+
+/* collapsible side panels */
+.panels-toggle {
+  display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+  background: transparent; border-color: var(--line); color: var(--muted); flex: none;
+}
+.panels-toggle .arrow { font-size: 20px; line-height: 1; width: 16px; text-align: center; }
+body.panels-collapsed #sidebar { width: 48px; padding: 8px 6px; overflow: hidden; }
+body.panels-collapsed #sidebar > :not(.panels-toggle) { display: none; }
+body.panels-collapsed .panels-toggle { flex-direction: column; justify-content: flex-start; height: 100%; padding: 10px 0; gap: 12px; }
+body.panels-collapsed .panels-toggle .label { writing-mode: vertical-rl; transform: rotate(180deg); }
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
+  .panels-toggle .arrow { transform: rotate(90deg); }
+  body.panels-collapsed { overflow: hidden; height: 100%; }
+  body.panels-collapsed #stage { flex: 1; height: auto; }
+  body.panels-collapsed #sidebar { width: auto; padding: 6px 16px; }
+  body.panels-collapsed .panels-toggle { flex-direction: row; height: auto; padding: 6px 11px; width: 100%; }
+  body.panels-collapsed .panels-toggle .label { writing-mode: horizontal-tb; transform: none; }
+}
+
+.phone-only { display: none; }
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo" aria-hidden="true"></span>Pixel Pattern Keeper</div>
+
+  <div class="group file-group">
+    <select id="projectSelect" title="Your patterns" aria-label="Your patterns"></select>
+    <button id="btnNew" title="Start a new pattern">New</button>
+    <button id="btnMore" class="more-btn" aria-expanded="false" aria-controls="fileBtns" title="Import, open, save and copy">More ▾</button>
+    <div class="file-btns" id="fileBtns">
+      <button id="btnImportImg" title="Turn a picture into a pattern">Import picture</button>
+      <button data-proxy="btnImportJson" title="Open a backup file (.pattern.json)">Open</button>
+      <button data-proxy="btnExportJson" class="needs-pattern" title="Download a backup file of this pattern and your progress">Save</button>
+      <button data-proxy="btnExportPng" class="needs-pattern" title="Download the pattern as a picture">Save image</button>
+      <button data-proxy="btnDuplicate" class="needs-pattern" title="Make a copy of this pattern">Duplicate</button>
+      <button data-proxy="btnClearCanvas" class="needs-pattern phone-only danger-text" title="Clear the whole pattern to one color">Clear canvas</button>
+    </div>
+  </div>
+
+  <div class="group tools" role="toolbar" aria-label="Tools">
+    <button data-tool="pan" title="Move around (H, or hold Space). Scroll / pinch to zoom.">
+      <svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg><span>Move</span></button>
+    <button data-tool="mark" title="Tap or drag over stitches to mark them done (M)">
+      <svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg><span>Mark done</span></button>
+    <button data-tool="unmark" title="Tap or drag over stitches to remove their ✓ (U)">
+      <svg viewBox="0 0 24 24"><path d="M20 20H9L4 15a2 2 0 0 1 0-2.8L13.2 3a2 2 0 0 1 2.8 0l4.6 4.6a2 2 0 0 1 0 2.8L11 20M7.5 9.5l7 7"/></svg><span>Unmark</span></button>
+    <div class="paint-box" role="group" aria-label="Painting">
+    <button data-tool="paint" title="Paint squares (B). Alt+click picks a color.">
+      <svg viewBox="0 0 24 24"><path d="M18.4 2.6a2 2 0 0 1 2.9 2.9L11 15.8 8.2 13zM8 14c-2 0-3.5 1.5-3.5 3.5 0 1.5-1 2.5-2.5 2.5 1 1.3 2.7 2 4.5 2 2.5 0 4.5-2 4.5-4.5z"/></svg><span>Paint</span></button>
+    <button data-tool="fill" title="Fill a connected area (G)">
+      <svg viewBox="0 0 24 24"><path d="M11 3L3 11l7 7 8-8zM3 11h15M20 14s-2 2.5-2 4a2 2 0 0 0 4 0c0-1.5-2-4-2-4z"/></svg><span>Fill</span></button>
+    <button data-tool="pick" title="Pick a color from the pattern (I)">
+      <svg viewBox="0 0 24 24"><path d="M14.5 4.5l5 5M17 2l5 5-3 3-5-5zM14 7l-9.5 9.5L3 21l4.5-1.5L17 10"/></svg><span>Pick</span></button>
+    <label id="paintWell" class="paint-well"><input type="color" id="paintColor" aria-label="Paint color"></label>
+    <button id="btnPalPop" class="pal-pop-btn" title="Choose one of this pattern's colors" aria-label="Choose a pattern color">▾</button>
+    </div>
+  </div>
+
+  <div class="group edit-group">
+    <button id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+    <button id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+    <button id="btnClearCanvas" class="danger-text" title="Clear the whole pattern to one color">Clear canvas</button>
+  </div>
+</header>
+
+<main>
+  <div id="stage">
+    <canvas id="canvas"></canvas>
+    <div id="hoverInfo" class="hover-info" hidden></div>
+    <div class="zoom-ctl">
+      <button id="btnZoomOut" title="Zoom out (−)" aria-label="Zoom out">−</button>
+      <button id="btnFit" title="Fit whole pattern (F)">Fit</button>
+      <button id="btnZoomIn" title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button id="btnFocusRow" title="Jump to the current row">Row</button>
+      <button id="btnRotate" class="toggle" title="Turn the pattern so rows run flat (R)">◇ Diagonal</button>
+    </div>
+    <div id="lineMenu" class="line-menu" hidden>
+      <div id="lineMenuTitle" class="small muted"></div>
+      <div class="line-grid">
+        <button data-line="colLeft">+ Column left</button>
+        <button data-line="colRight">+ Column right</button>
+        <button data-line="delCol" class="danger-text">Delete column</button>
+        <button data-line="rowAbove">+ Row above</button>
+        <button data-line="rowBelow">+ Row below</button>
+        <button data-line="delRow" class="danger-text">Delete row</button>
+      </div>
+      <div class="small muted">New rows/columns copy this one's colors. Undo with Ctrl+Z.</div>
+    </div>
+    <div id="emptyState" class="empty" hidden>
+      <h1>Pixel Pattern Keeper</h1>
+      <p>Follow pixel art row by row (corner to corner or straight rows) and never lose your place.</p>
+      <div class="btnrow">
+        <button class="primary" id="emptyImport">Import a picture</button>
+        <button id="emptyNew">Start a blank pattern</button>
+        <button id="emptyBackup">Open a backup</button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="sidebar">
+    <button id="btnPanels" class="panels-toggle" aria-expanded="true" title="Hide the panels to give the pattern more room (P)">
+      <span class="arrow" aria-hidden="true">›</span><span class="label">Hide panels</span></button>
+    <section class="card row-card" id="rowCard">
+      <div class="row-head">
+        <button id="btnPrevRow" title="Previous row ([)" aria-label="Previous row">‹</button>
+        <div class="row-title">
+          <span class="eyebrow" id="rowEyebrow">C2C row</span>
+          <span><input id="rowInput" type="number" min="1" aria-label="Current row"> <span class="muted">of <span id="rowTotal"></span></span></span>
+        </div>
+        <button id="btnNextRow" title="Next row (])" aria-label="Next row">›</button>
+      </div>
+      <div id="rowMeta" class="row-meta"></div>
+      <div class="strip-wrap">
+        <div class="strip-ends"><span id="stripLeft"></span><span id="stripArrow" class="strip-arrow"></span><span id="stripRight"></span></div>
+        <div id="rowStrip" class="strip" aria-label="Current row, laid flat"></div>
+      </div>
+      <div id="nextStitch" class="next-stitch"></div>
+      <div class="btnrow">
+        <button id="btnUnstitch" title="Un-mark the last stitch (Backspace)">↶ Undo stitch</button>
+        <button id="btnStitch" class="primary" title="Mark the next stitch done (N or Enter)">✓ Stitch done</button>
+      </div>
+      <div class="runs-label muted small">Color runs, in working order</div>
+      <div id="rowRuns" class="runs"></div>
+      <div class="btnrow">
+        <button id="btnFirstOpen" title="Go to the first row that isn't finished">First unfinished row</button>
+        <button id="btnRowDone" title="Mark the whole row done and move on">✓ Finish row</button>
+      </div>
+      <div class="btnrow">
+        <button id="btnClearRow" class="danger-text" title="Remove every ✓ in this row">Clear this row's ✓</button>
+        <button id="btnResetProgress" class="danger-text" title="Remove every ✓ in the whole pattern">Clear all ✓</button>
+      </div>
+      <div class="progress" aria-hidden="true"><div id="progBar"></div></div>
+      <div id="progText" class="muted small"></div>
+    </section>
+
+    <details class="card" open>
+      <summary>View</summary>
+      <label class="check"><input type="checkbox" data-setting="rotate"> Turn diagonal (rows run flat)</label>
+      <label class="check"><input type="checkbox" data-setting="isolate"> Spotlight the current row</label>
+      <label class="range">Spotlight dimming <input type="range" min="0.2" max="0.95" step="0.05" data-setting="isolateAmt"></label>
+      <label class="check"><input type="checkbox" data-setting="follow"> Keep the current row on screen</label>
+      <label class="check"><input type="checkbox" data-setting="autoAdvance"> Go to next row when a row is finished</label>
+      <label class="check"><input type="checkbox" data-setting="checks"> Show ✓ on finished stitches</label>
+      <label class="range">Fade finished stitches <input type="range" min="0" max="0.85" step="0.05" data-setting="fade"></label>
+      <label class="check"><input type="checkbox" data-setting="numbers"> Number the stitches in the current row (when zoomed in)</label>
+      <label class="check"><input type="checkbox" data-setting="showGrid"> Show grid</label>
+      <label class="check"><input type="checkbox" data-setting="minorGrid"> Show every square's outline</label>
+    </details>
+
+    <details class="card" open>
+      <summary>Colors</summary>
+      <p class="muted small">Click a swatch to paint with it. Each color shows how many stitches (squares) of it are in the pattern.</p>
+      <div id="paletteList" class="palette"></div>
+      <button id="btnAddColor">+ Add color</button>
+    </details>
+
+    <details class="card">
+      <summary>Pattern settings</summary>
+      <label class="field">Name <input id="setName"></label>
+      <div class="grid2">
+        <label class="field">Crochet method
+          <select data-setting="method"><option value="c2c">Corner to corner (C2C)</option><option value="rows">Straight rows</option></select></label>
+        <label class="field">Start in the
+          <select data-setting="start"><option value="bl">bottom-left corner</option><option value="br">bottom-right corner</option></select></label>
+      </div>
+      <label class="check"><input type="checkbox" data-setting="alternate"> Alternate direction every row (turn your work)</label>
+      <div class="grid2">
+        <label class="field">Squares wide <input id="setW" type="number" min="1" max="1000"></label>
+        <label class="field">Squares tall <input id="setH" type="number" min="1" max="1000"></label>
+      </div>
+      <div class="grid2">
+        <label class="field">When resizing keep
+          <select id="setAnchor"><option value="bl">bottom-left corner</option><option value="br">bottom-right corner</option><option value="tl">top-left corner</option><option value="tr">top-right corner</option></select></label>
+        <button id="btnResize" class="self-end">Apply size</button>
+      </div>
+      <div class="sub-head">Add or remove rows &amp; columns</div>
+      <div class="grid2">
+        <label class="field">How many <input id="edgeN" type="number" min="1" max="500" value="1"></label>
+        <label class="field">Color of new squares <select id="edgeFill"></select></label>
+      </div>
+      <div class="edge-line"><b>Add to</b>
+        <button data-edge="top" data-op="add">Top</button><button data-edge="right" data-op="add">Right</button><button data-edge="bottom" data-op="add">Bottom</button><button data-edge="left" data-op="add">Left</button>
+      </div>
+      <div class="edge-line"><b>Remove from</b>
+        <button data-edge="top" data-op="del" class="danger-text">Top</button><button data-edge="right" data-op="del" class="danger-text">Right</button><button data-edge="bottom" data-op="del" class="danger-text">Bottom</button><button data-edge="left" data-op="del" class="danger-text">Left</button>
+      </div>
+      <button id="btnLineTool" class="toggle" aria-pressed="false" title="Then tap a square on the pattern to add or delete a row or column right there">Add or delete one in the middle…</button>
+      <p id="lineToolHint" class="muted small" style="margin:0" hidden>Tap a square on the pattern to add or delete the row or column it's in. Click the button again (or pick another tool) when you're done.</p>
+      <div class="sub-head">Grid &amp; direction</div>
+      <div class="grid2">
+        <label class="field">Grid block size <input type="number" min="1" max="200" data-setting="gridEvery"></label>
+        <label class="field">Grid line color <input type="color" data-setting="gridColor"></label>
+      </div>
+      <label class="check"><input type="checkbox" data-setting="reverse"> Flip stitch direction (if your rows go the other way)</label>
+    </details>
+
+    <details class="card">
+      <summary>Save, back up &amp; share</summary>
+      <p class="muted small">Your work saves automatically in this browser. Download a backup now and then — clearing browser data erases it.</p>
+      <div class="btnrow wrap">
+        <button id="btnExportJson">Download backup</button>
+        <button id="btnImportJson">Open backup…</button>
+        <button id="btnExportPng">Download pattern image</button>
+        <button id="btnDuplicate">Duplicate</button>
+      </div>
+      <div class="btnrow wrap">
+        <button id="btnDelete" class="danger-text">Delete pattern</button>
+      </div>
+      <input type="file" id="jsonFile" accept=".json,application/json" hidden>
+    </details>
+
+    <details class="card">
+      <summary>How it works &amp; shortcuts</summary>
+      <ul class="small help">
+        <li>Rows are counted from the starting corner (bottom-left or bottom-right, set in Pattern settings). In C2C, row 1 is that single corner square; in straight rows it's the bottom line.</li>
+        <li>The strip shows the current row laid flat; numbers are the order you work them. Tap a square to toggle it.</li>
+        <li>“Start/End: increase or decrease” tells you whether that end of the row grows or shrinks compared with the last row.</li>
+        <li><b>N</b> / <b>Enter</b> stitch done · <b>Backspace</b> undo stitch · <b>[</b> <b>]</b> previous/next row</li>
+        <li><b>P</b> hide/show these panels · <b>R</b> turn diagonal · <b>F</b> fit · <b>+</b>/<b>−</b> zoom · hold <b>Space</b> to drag</li>
+        <li>To remove a single ✓, use <b>Unmark</b>, tap the square in the row strip, or tap it again with <b>Mark done</b>.</li>
+        <li>To add or remove rows and columns, open <b>Pattern settings</b>: add or remove them at the top, right, bottom or left, or use “Add or delete one in the middle…” and tap a square.</li>
+        <li>The color box next to Paint/Fill/Pick is a color picker: choose any color to paint with (new colors are added to your list). ▾ picks one of the pattern's colors.</li>
+        <li><b>H</b> move · <b>M</b> mark · <b>U</b> unmark · <b>B</b> paint · <b>G</b> fill · <b>I</b> pick · <b>Ctrl+Z</b> undo</li>
+      </ul>
+    </details>
+  </aside>
+</main>
+
+<dialog id="dlgNew">
+  <form method="dialog" class="dlg">
+    <h2>New pattern</h2>
+    <div class="new-choices">
+      <button type="button" id="newFromPicture" class="choice"><b>From a picture</b><span>Turn pixel art into a pattern</span></button>
+      <button type="button" id="newFromBackup" class="choice"><b>Open a backup</b><span>A .pattern.json file you saved</span></button>
+    </div>
+    <div class="or"><span>or start a blank grid</span></div>
+    <label class="field">Name <input id="newName" value="My pattern" required></label>
+    <div class="grid2">
+      <label class="field">Squares wide <input id="newW" type="number" min="1" max="1000" placeholder="e.g. 100" required></label>
+      <label class="field">Squares tall <input id="newH" type="number" min="1" max="1000" placeholder="e.g. 100" required></label>
+    </div>
+    <label class="field">Background color <input id="newBg" type="color" value="#ffffff"></label>
+    <fieldset class="style-set">
+      <legend>How will you crochet it?</legend>
+      <div class="grid2">
+        <label class="field">Method
+          <select id="newMethod"><option value="c2c">Corner to corner (C2C)</option><option value="rows">Straight rows</option></select></label>
+        <label class="field">Start in the
+          <select id="newStart"><option value="bl">bottom-left corner</option><option value="br">bottom-right corner</option></select></label>
+      </div>
+      <label class="check"><input type="checkbox" id="newAlt" checked> Alternate direction every row</label>
+    </fieldset>
+    <menu>
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="ok" class="primary">Create</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlgImport">
+  <form method="dialog" class="dlg wide">
+    <h2>Turn a picture into a pattern</h2>
+    <label class="field">Picture <input type="file" id="impFile" accept="image/*"></label>
+    <p id="impNote" class="muted small" style="margin:0"></p>
+    <div class="grid4">
+      <label class="field">Name <input id="impName" value="Imported pattern"></label>
+      <label class="field">Squares wide <input id="impW" type="number" min="1" max="1000" placeholder="auto"></label>
+      <label class="field">Squares tall <span class="inline"><input id="impH" type="number" min="1" max="1000" placeholder="auto"><button type="button" id="impAutoSize" title="Work out the size from how the picture looks">Auto</button></span></label>
+      <label class="field">Number of colors <input id="impK" type="number" min="2" max="32" value="4"></label>
+    </div>
+    <details>
+      <summary>Trim edges &amp; sampling</summary>
+      <label class="check"><input type="checkbox" id="impAuto" checked> Line up the grid automatically</label>
+      <p class="muted small">If the blue grid doesn't sit on the picture's squares, trim the edges by hand (in picture pixels).</p>
+      <div class="grid4">
+        <label class="field">Trim left <input id="impCL" type="number" min="0" value="0"></label>
+        <label class="field">Trim top <input id="impCT" type="number" min="0" value="0"></label>
+        <label class="field">Trim right <input id="impCR" type="number" min="0" value="0"></label>
+        <label class="field">Trim bottom <input id="impCB" type="number" min="0" value="0"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="impCenter" checked> Read only the middle of each square (ignores grid lines drawn in the picture)</label>
+    </details>
+    <fieldset class="style-set">
+      <legend>How will you crochet it?</legend>
+      <div class="grid2">
+        <label class="field">Method
+          <select id="impMethod"><option value="c2c">Corner to corner (C2C)</option><option value="rows">Straight rows</option></select></label>
+        <label class="field">Start in the
+          <select id="impStart"><option value="bl">bottom-left corner</option><option value="br">bottom-right corner</option></select></label>
+      </div>
+      <label class="check"><input type="checkbox" id="impAlt" checked> Alternate direction every row</label>
+    </fieldset>
+    <div class="previews">
+      <figure><canvas id="impSrc" width="10" height="10"></canvas><figcaption>Picture with your grid</figcaption></figure>
+      <figure><canvas id="impOut" width="10" height="10"></canvas><figcaption>Pattern preview</figcaption></figure>
+    </div>
+    <div id="impPal" class="imp-pal"></div>
+    <menu>
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="ok" id="impCreate" class="primary" disabled>Create pattern</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlgAsk">
+  <form method="dialog" class="dlg">
+    <h2 id="askTitle"></h2>
+    <p id="askMsg" class="muted" style="margin:0"></p>
+    <div id="askExtra"></div>
+    <menu>
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="alt" id="askAlt" hidden></button>
+      <button value="ok" id="askOk" class="primary"></button>
+    </menu>
+  </form>
+</dialog>
+
+<div id="palPop" class="pal-pop" hidden></div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+(() => {
+'use strict';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// ---------------------------------------------------------------- storage
+// Each pattern is saved under its own key; an index lists them all.
+const KEY_INDEX = 'ppk:index', KEY_LAST = 'ppk:last', keyProj = id => 'ppk:proj:' + id;
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { console.warn(e); return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } },
+};
+
+function toB64(u8) {
+  let s = '';
+  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function fromB64(b) {
+  const s = atob(b), u = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+  return u;
+}
+
+const DEFAULT_SETTINGS = {
+  gridEvery: 10, gridColor: '#3da5ff', showGrid: true, minorGrid: true,
+  method: 'c2c', start: 'bl', alternate: true, reverse: false, rotate: false, isolate: false, isolateAmt: 0.7,
+  follow: true, autoAdvance: true, fade: 0.45, checks: true, numbers: true,
+};
+
+function makeProject({ name, w, h, palette, cells }) {
+  return {
+    id: uid(), name, w, h,
+    palette,
+    cells: cells || new Uint8Array(w * h),
+    done: new Uint8Array(w * h),
+    row: 0, sel: Math.min(1, palette.length - 1),
+    settings: { ...DEFAULT_SETTINGS },
+    view: null, updated: Date.now(),
+  };
+}
+
+function serialize(p) {
+  return {
+    app: 'pixel-pattern-keeper', v: 1,
+    id: p.id, name: p.name, w: p.w, h: p.h,
+    palette: p.palette, cells: toB64(p.cells), done: toB64(p.done),
+    row: p.row, sel: p.sel, settings: p.settings, view: p.view, updated: p.updated,
+  };
+}
+
+function deserialize(o) {
+  const w = o.w | 0, h = o.h | 0;
+  if (!w || !h || !Array.isArray(o.palette) || !o.palette.length || typeof o.cells !== 'string') throw new Error('Not a pattern file');
+  let cells = fromB64(o.cells);
+  let done = o.done ? fromB64(o.done) : new Uint8Array(w * h);
+  if (cells.length !== w * h) throw new Error('Pattern data is damaged');
+  if (done.length !== w * h) done = new Uint8Array(w * h);
+  const palette = o.palette.map(c => ({ hex: String(c.hex || '#888888'), name: String(c.name || 'Color') }));
+  for (let i = 0; i < cells.length; i++) if (cells[i] >= palette.length) cells[i] = 0;
+  return {
+    id: o.id || uid(), name: o.name || 'Untitled', w, h, palette, cells, done,
+    row: clamp(o.row | 0, 0, w + h - 2), sel: clamp(o.sel | 0, 0, palette.length - 1),
+    settings: { ...DEFAULT_SETTINGS, ...(o.settings || {}) },
+    view: o.view || null, updated: o.updated || Date.now(),
+  };
+}
+
+function readIndex() {
+  try { return JSON.parse(store.get(KEY_INDEX)) || []; } catch { return []; }
+}
+function writeIndex(list) { store.set(KEY_INDEX, JSON.stringify(list)); }
+
+let saveTimer = null, warnedSave = false;
+function saveNow() {
+  clearTimeout(saveTimer); saveTimer = null;
+  const p = state.p; if (!p) return;
+  p.updated = Date.now();
+  p.view = { ...state.view };
+  const ok = store.set(keyProj(p.id), JSON.stringify(serialize(p)));
+  const list = readIndex().filter(e => e.id !== p.id);
+  list.unshift({ id: p.id, name: p.name, updated: p.updated });
+  writeIndex(list);
+  store.set(KEY_LAST, p.id);
+  if (!ok && !warnedSave) { warnedSave = true; toast('Could not save in this browser (storage full or blocked). Download a backup!', true); }
+}
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 400); }
+function loadProject(id) {
+  const raw = store.get(keyProj(id)); if (!raw) return null;
+  try { return deserialize(JSON.parse(raw)); } catch (e) { console.error(e); return null; }
+}
+
+// ---------------------------------------------------------------- state
+const state = {
+  p: null,
+  tool: 'pan',
+  view: { s: 8, ox: 0, oy: 0 },
+  undo: [], redo: [],
+  hover: null,
+  space: false,
+};
+
+// ---------------------------------------------------------------- colors
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  const n = m ? parseInt(m[1], 16) : 0x888888;
+  return [n >> 16 & 255, n >> 8 & 255, n & 255];
+}
+const rgbToHex = (r, g, b) => '#' + [r, g, b].map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+const lum = ([r, g, b]) => 0.299 * r + 0.587 * g + 0.114 * b;
+function rgbToLab(r, g, b) {
+  const f = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const R = f(r), G = f(g), B = f(b);
+  const x = (0.4124 * R + 0.3576 * G + 0.1805 * B) / 0.95047;
+  const y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  const z = (0.0193 * R + 0.1192 * G + 0.9505 * B) / 1.08883;
+  const k = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  const fx = k(x), fy = k(y), fz = k(z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+const inkFor = hex => lum(hexToRgb(hex)) > 140 ? '#111' : '#fff';
+
+const NAMED = [
+  ['Black', 15, 15, 15], ['White', 250, 250, 250], ['Gray', 128, 128, 128], ['Light gray', 200, 200, 200],
+  ['Dark gray', 70, 70, 70], ['Red', 210, 35, 45], ['Dark red', 120, 15, 25], ['Pink', 240, 140, 175],
+  ['Orange', 240, 135, 30], ['Yellow', 245, 210, 45], ['Cream', 245, 235, 200], ['Green', 50, 150, 65],
+  ['Dark green', 20, 80, 40], ['Light green', 150, 210, 120], ['Blue', 40, 95, 200], ['Navy', 20, 30, 80],
+  ['Light blue', 140, 190, 235], ['Teal', 20, 140, 140], ['Purple', 120, 60, 160], ['Lavender', 190, 160, 220],
+  ['Brown', 110, 70, 40], ['Tan', 200, 160, 110],
+];
+function nameColor([r, g, b]) {
+  let best = NAMED[0][0], bd = Infinity;
+  const [L, A, B] = rgbToLab(r, g, b);
+  for (const [n, ...rgb] of NAMED) {
+    const c = rgbToLab(...rgb), d = (L - c[0]) ** 2 + (A - c[1]) ** 2 + (B - c[2]) ** 2;
+    if (d < bd) { bd = d; best = n; }
+  }
+  return best;
+}
+function uniqueNames(pal) {
+  const seen = {};
+  for (const c of pal) {
+    seen[c.name] = (seen[c.name] || 0) + 1;
+    if (seen[c.name] > 1) c.name += ' ' + seen[c.name];
+  }
+  return pal;
+}
+
+// ---------------------------------------------------------------- row geometry
+// Two methods: C2C (diagonal rows) and straight rows, each starting in the bottom-left or
+// bottom-right corner. Row 0 always holds the starting corner.
+// C2C: "u" is the column counted from the starting side, so diagonal d holds every square with
+// u + (h-1-y) === d. In the turned view each row runs flat and "spatial" order is left to right
+// on screen, which is x ascending for both corners.
+// Straight rows: row d is line h-1-d (counted from the bottom), spatial order is left to right.
+const isC2C = p => p.settings.method !== 'rows';
+const rowCount = p => (isC2C(p) ? p.w + p.h - 1 : p.h);
+const fromRight = p => p.settings.start === 'br';
+const colU = (p, x) => (fromRight(p) ? p.w - 1 - x : x);
+const rowOf = (p, x, y) => (isC2C(p) ? colU(p, x) : 0) + (p.h - 1 - y);
+/**
+ * True when row d is worked left to right (in the turned view for C2C). Row 1 starts at the
+ * starting corner; with alternating on, every other row goes back the other way.
+ */
+const isAsc = (p, d) => (((p.settings.alternate ? d % 2 === 0 : true) !== !!p.settings.reverse) !== fromRight(p));
+/** Squares of row d in spatial order (left end first). */
+function rowSpatial(p, d) {
+  const out = [];
+  if (!isC2C(p)) {
+    const y = p.h - 1 - d;
+    for (let x = 0; x < p.w; x++) out.push(y * p.w + x);
+    return out;
+  }
+  const lo = Math.max(0, d - (p.h - 1)), hi = Math.min(p.w - 1, d);
+  for (let u = lo; u <= hi; u++) out.push((p.h - 1 - (d - u)) * p.w + colU(p, u));
+  if (fromRight(p)) out.reverse();
+  return out;
+}
+/** Names of the pattern edges at the left and right ends of a row. */
+const rowEnds = p => !isC2C(p)
+  ? ['← left edge', 'right edge →']
+  : fromRight(p)
+    ? ['↙ bottom / left edge', 'top / right edge ↗']
+    : ['↖ left / top edge', 'bottom / right edge ↘'];
+/** Squares of row d in the order they are crocheted. */
+function rowOrder(p, d) {
+  const s = rowSpatial(p, d);
+  return isAsc(p, d) ? s : s.reverse();
+}
+function rowIsDone(p, d) { return rowSpatial(p, d).every(i => p.done[i]); }
+function runsOf(p, order) {
+  const runs = [];
+  for (const i of order) {
+    const c = p.cells[i], last = runs[runs.length - 1];
+    if (last && last.c === c) last.cells.push(i); else runs.push({ c, cells: [i] });
+  }
+  return runs;
+}
+
+// ---------------------------------------------------------------- canvas & view
+const cv = $('#canvas'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'), offCtx = off.getContext('2d');
+let imgDirty = true, checkPath = null, rafId = 0;
+
+function invalidate() { imgDirty = true; checkPath = null; }
+function requestDraw() { if (!rafId) rafId = requestAnimationFrame(draw); }
+const turned = p => !!(p && p.settings.rotate && isC2C(p));
+const angle = () => (turned(state.p) ? (fromRight(state.p) ? Math.PI / 4 : -Math.PI / 4) : 0);
+
+function toScreen(cx, cy) {
+  const p = state.p, v = state.view, a = angle();
+  const x = (cx - p.w / 2) * v.s, y = (cy - p.h / 2) * v.s;
+  const c = Math.cos(a), s = Math.sin(a);
+  return { x: v.ox + x * c - y * s, y: v.oy + x * s + y * c };
+}
+function toCell(sx, sy) {
+  const p = state.p, v = state.view, a = -angle();
+  const dx = sx - v.ox, dy = sy - v.oy, c = Math.cos(a), s = Math.sin(a);
+  return { fx: (dx * c - dy * s) / v.s + p.w / 2, fy: (dx * s + dy * c) / v.s + p.h / 2 };
+}
+function cellAt(pt) {
+  const p = state.p; if (!p) return null;
+  const { fx, fy } = toCell(pt.x, pt.y);
+  const x = Math.floor(fx), y = Math.floor(fy);
+  if (x < 0 || y < 0 || x >= p.w || y >= p.h) return null;
+  return { x, y, i: y * p.w + x };
+}
+function zoomAt(sx, sy, factor) {
+  const f = toCell(sx, sy);
+  state.view.s = clamp(state.view.s * factor, 0.3, 160);
+  const sp = toScreen(f.fx, f.fy);
+  state.view.ox += sx - sp.x; state.view.oy += sy - sp.y;
+}
+function fit() {
+  const p = state.p; if (!p) return;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (turned(p)) {
+    const span = (p.w + p.h) * Math.SQRT1_2;
+    state.view.s = Math.min(W / span, H / span) * 0.94;
+  } else {
+    state.view.s = Math.min(W / p.w, H / p.h) * 0.94;
+  }
+  state.view.ox = W / 2; state.view.oy = H / 2;
+  viewChanged();
+}
+function viewChanged() { requestDraw(); scheduleSave(); }
+/**
+ * The part of the pattern area that is actually on screen, in canvas coordinates. On phones the
+ * page scrolls, so part of the pattern area can be hidden under the top bar or off the screen.
+ */
+function visibleBox() {
+  const r = cv.getBoundingClientRect();
+  const bar = $('.topbar').getBoundingClientRect();
+  const top = Math.max(r.top, getComputedStyle($('.topbar')).position === 'sticky' ? bar.bottom : 0);
+  const bottom = Math.min(r.bottom, window.innerHeight);
+  const left = Math.max(r.left, 0), right = Math.min(r.right, window.innerWidth);
+  return { l: left - r.left, t: top - r.top, r: right - r.left, b: bottom - r.top };
+}
+/**
+ * Bring square i into the visible part of the pattern area. Normally this moves the view only
+ * as far as needed (so it doesn't jump around or show empty space); force centres it.
+ */
+function ensureVisible(i, force) {
+  const p = state.p; if (!p) return;
+  const box = visibleBox();
+  const vw = box.r - box.l, vh = box.b - box.t;
+  if (vw < 40 || vh < 40) return; // pattern scrolled out of sight: leave it alone
+  const x = i % p.w, y = (i / p.w) | 0;
+  const sp = toScreen(x + 0.5, y + 0.5);
+  let dx = 0, dy = 0;
+  if (force) {
+    dx = (box.l + box.r) / 2 - sp.x; dy = (box.t + box.b) / 2 - sp.y;
+  } else {
+    const mx = Math.min(vw * 0.2, 60 + state.view.s), my = Math.min(vh * 0.2, 60 + state.view.s);
+    if (sp.x < box.l + mx) dx = box.l + mx - sp.x; else if (sp.x > box.r - mx) dx = box.r - mx - sp.x;
+    if (sp.y < box.t + my) dy = box.t + my - sp.y; else if (sp.y > box.b - my) dy = box.b - my - sp.y;
+  }
+  if (dx || dy) { state.view.ox += dx; state.view.oy += dy; viewChanged(); }
+}
+function setRotate(on) {
+  const p = state.p; if (!p) return;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  const c = toCell(W / 2, H / 2);
+  p.settings.rotate = on;
+  const sp = toScreen(c.fx, c.fy);
+  state.view.ox += W / 2 - sp.x; state.view.oy += H / 2 - sp.y;
+  syncSettingsUI(); viewChanged();
+}
+
+function stageColor() { return getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#2a2b30'; }
+
+function rebuildImage() {
+  const p = state.p, s = p.settings;
+  if (off.width !== p.w || off.height !== p.h) { off.width = p.w; off.height = p.h; }
+  const img = offCtx.createImageData(p.w, p.h), d = img.data;
+  const pal = p.palette.map(c => hexToRgb(c.hex));
+  const fade = s.fade, iso = s.isolate ? s.isolateAmt : 0, bg = hexToRgb(stageColor());
+  for (let y = 0; y < p.h; y++) {
+    for (let x = 0; x < p.w; x++) {
+      const i = y * p.w + x;
+      let [r, g, b] = pal[p.cells[i]] || [255, 0, 255];
+      if (p.done[i] && fade > 0) { r += (128 - r) * fade; g += (128 - g) * fade; b += (128 - b) * fade; }
+      if (iso > 0 && rowOf(p, x, y) !== p.row) { r += (bg[0] - r) * iso; g += (bg[1] - g) * iso; b += (bg[2] - b) * iso; }
+      const o = i * 4; d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
+    }
+  }
+  offCtx.putImageData(img, 0, 0);
+  imgDirty = false;
+}
+
+function getCheckPath() {
+  const a = angle();
+  if (checkPath && checkPath.a === a) return checkPath.path;
+  // counter-rotate the tick inside each square so it stays upright in the diagonal view
+  const c = Math.cos(-a), s = Math.sin(-a);
+  const tick = [[0.24, 0.54], [0.43, 0.73], [0.78, 0.3]].map(([u, v]) => {
+    const du = u - 0.5, dv = v - 0.5;
+    return [0.5 + du * c - dv * s, 0.5 + du * s + dv * c];
+  });
+  const p = state.p, path = new Path2D();
+  for (let i = 0; i < p.done.length; i++) {
+    if (!p.done[i]) continue;
+    const x = i % p.w, y = (i / p.w) | 0;
+    path.moveTo(x + tick[0][0], y + tick[0][1]); path.lineTo(x + tick[1][0], y + tick[1][1]); path.lineTo(x + tick[2][0], y + tick[2][1]);
+  }
+  checkPath = { a, path };
+  return path;
+}
+
+function draw() {
+  rafId = 0;
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  const bw = Math.round(W * dpr), bh = Math.round(H * dpr);
+  if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, bw, bh);
+  const p = state.p; if (!p) return;
+  if (imgDirty) rebuildImage();
+  const v = state.view, s = p.settings, sc = v.s;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.translate(v.ox, v.oy);
+  ctx.rotate(angle());
+  ctx.scale(sc, sc);
+  ctx.translate(-p.w / 2, -p.h / 2);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(off, 0, 0);
+
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (s.checks && sc >= 7) {
+    const path = getCheckPath();
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 0.22; ctx.stroke(path);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.11; ctx.stroke(path);
+  }
+
+  ctx.lineCap = 'butt';
+  if (s.showGrid) {
+    const g = Math.max(1, s.gridEvery | 0);
+    // Major lines are counted from the starting corner.
+    const major = x => (fromRight(p) ? p.w - x : x) % g === 0;
+    if (s.minorGrid && sc >= 5) {
+      ctx.beginPath();
+      for (let x = 1; x < p.w; x++) if (!major(x)) { ctx.moveTo(x, 0); ctx.lineTo(x, p.h); }
+      for (let y = 1; y < p.h; y++) if ((p.h - y) % g) { ctx.moveTo(0, y); ctx.lineTo(p.w, y); }
+      ctx.strokeStyle = 'rgba(128,128,128,.55)'; ctx.lineWidth = 1 / sc; ctx.stroke();
+    }
+    ctx.beginPath();
+    for (let x = 0; x <= p.w; x++) if (major(x)) { ctx.moveTo(x, 0); ctx.lineTo(x, p.h); }
+    for (let y = p.h; y >= 0; y -= g) { ctx.moveTo(0, y); ctx.lineTo(p.w, y); }
+    ctx.strokeStyle = s.gridColor; ctx.lineWidth = clamp(sc / 6, 1, 2.5) / sc; ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1 / sc; ctx.strokeRect(0, 0, p.w, p.h);
+
+  // current row
+  const order = rowOrder(p, p.row);
+  ctx.beginPath();
+  for (const i of order) ctx.rect(i % p.w, (i / p.w) | 0, 1, 1);
+  ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = clamp(sc / 8, 1.5, 3) / sc; ctx.stroke();
+  const next = order.find(i => !p.done[i]);
+  if (next !== undefined) {
+    const x = next % p.w, y = (next / p.w) | 0, pad = Math.max(0.12, 3 / sc);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 5 / sc; ctx.strokeRect(x - pad, y - pad, 1 + 2 * pad, 1 + 2 * pad);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5 / sc; ctx.strokeRect(x - pad, y - pad, 1 + 2 * pad, 1 + 2 * pad);
+  }
+  if (state.lineSel) {
+    ctx.fillStyle = 'rgba(255,210,63,.35)';
+    ctx.fillRect(state.lineSel.x, 0, 1, p.h); ctx.fillRect(0, state.lineSel.y, p.w, 1);
+  }
+  if (state.hover) {
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.5 / sc;
+    ctx.strokeRect(state.hover.x, state.hover.y, 1, 1);
+  }
+
+  // stitch numbers stay upright, so draw them in screen space
+  if (s.numbers && sc >= 16) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = `700 ${Math.round(clamp(sc * 0.4, 9, 15))}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    order.forEach((i, k) => {
+      const x = i % p.w, y = (i / p.w) | 0, sp = toScreen(x + 0.5, y + 0.5);
+      if (sp.x < -20 || sp.y < -20 || sp.x > W + 20 || sp.y > H + 20) return;
+      if (p.done[i] && s.checks) return;
+      ctx.fillStyle = inkFor(p.palette[p.cells[i]].hex);
+      ctx.fillText(String(k + 1), sp.x, sp.y + 0.5);
+    });
+  }
+}
+
+new ResizeObserver(() => requestDraw()).observe($('#stage'));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { invalidate(); requestDraw(); });
+
+// ---------------------------------------------------------------- undo
+function snapshot() {
+  const p = state.p;
+  return { w: p.w, h: p.h, cells: p.cells.slice(), done: p.done.slice(), palette: p.palette.map(c => ({ ...c })), row: p.row, sel: p.sel };
+}
+function restore(s) {
+  const p = state.p, resized = s.w !== p.w || s.h !== p.h;
+  Object.assign(p, s);
+  if (resized) fit();
+}
+function pushSnap(s) {
+  state.undo.push(s);
+  if (state.undo.length > 100) state.undo.shift();
+  state.redo.length = 0;
+  syncUndo();
+}
+const pushUndo = () => pushSnap(snapshot());
+function undo() {
+  if (!state.p || !state.undo.length) return;
+  state.redo.push(snapshot()); restore(state.undo.pop()); changed(); syncUndo();
+}
+function redo() {
+  if (!state.p || !state.redo.length) return;
+  state.undo.push(snapshot()); restore(state.redo.pop()); changed(); syncUndo();
+}
+function syncUndo() {
+  $('#btnUndo').disabled = !state.undo.length;
+  $('#btnRedo').disabled = !state.redo.length;
+}
+
+/** Something about the pattern changed: redraw everything and save. */
+function changed() {
+  invalidate();
+  renderRow(); renderPalette(); renderProgress(); renderCurColor();
+  scheduleSave(); requestDraw();
+}
+
+// ---------------------------------------------------------------- editing
+function paintCell(i) {
+  const p = state.p;
+  if (p.cells[i] === p.sel) return false;
+  p.cells[i] = p.sel; return true;
+}
+function lineCells(a, b, fn) {
+  let x0 = a.x, y0 = a.y; const x1 = b.x, y1 = b.y;
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    fn(x0, y0);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}
+function flood(x, y, color) {
+  const p = state.p, from = p.cells[y * p.w + x];
+  if (from === color) return;
+  const stack = [y * p.w + x];
+  while (stack.length) {
+    const i = stack.pop();
+    if (p.cells[i] !== from) continue;
+    p.cells[i] = color;
+    const cx = i % p.w;
+    if (cx > 0) stack.push(i - 1);
+    if (cx < p.w - 1) stack.push(i + 1);
+    if (i >= p.w) stack.push(i - p.w);
+    if (i < p.cells.length - p.w) stack.push(i + p.w);
+  }
+}
+function setSel(i) {
+  state.p.sel = i; renderPalette(); renderCurColor(); scheduleSave();
+}
+
+function resizePattern(nw, nh, anchor) {
+  const p = state.p;
+  if (nw === p.w && nh === p.h) return;
+  pushUndo();
+  const cells = new Uint8Array(nw * nh), done = new Uint8Array(nw * nh);
+  const dy = anchor[0] === 'b' ? nh - p.h : 0, dx = anchor[1] === 'r' ? nw - p.w : 0;
+  for (let y = 0; y < nh; y++) {
+    const oy = y - dy; if (oy < 0 || oy >= p.h) continue;
+    for (let x = 0; x < nw; x++) {
+      const ox = x - dx; if (ox < 0 || ox >= p.w) continue;
+      cells[y * nw + x] = p.cells[oy * p.w + ox];
+      done[y * nw + x] = p.done[oy * p.w + ox];
+    }
+  }
+  Object.assign(p, { w: nw, h: nh, cells, done, row: p.row });
+  p.row = clamp(p.row, 0, rowCount(p) - 1);
+  fit(); changed(); syncSettingsUI();
+}
+
+/**
+ * Rebuild the grid at a new size. src(x, y) gives the old square a new square copies (or null
+ * to fill it with colour `fill`), and fresh(x, y) says a copied square is newly added (so it
+ * starts without a ✓).
+ */
+function remapGrid(nw, nh, src, fresh, fill = 0) {
+  const p = state.p;
+  if (nw < 1 || nh < 1 || nw > 1000 || nh > 1000) return;
+  pushUndo();
+  const cells = new Uint8Array(nw * nh), done = new Uint8Array(nw * nh);
+  for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
+    const from = src(x, y), i = y * nw + x;
+    if (!from) { cells[i] = fill; continue; }
+    const o = from[1] * p.w + from[0];
+    cells[i] = p.cells[o];
+    done[i] = fresh(x, y) ? 0 : p.done[o];
+  }
+  Object.assign(p, { w: nw, h: nh, cells, done, row: p.row });
+  p.row = clamp(p.row, 0, rowCount(p) - 1);
+  changed(); syncSettingsUI();
+}
+/** Add a column at position pos (0..w), copying column c. */
+const insertCol = (pos, c) => remapGrid(state.p.w + 1, state.p.h, (x, y) => [x < pos ? x : x === pos ? c : x - 1, y], x => x === pos);
+const deleteCol = c => remapGrid(state.p.w - 1, state.p.h, (x, y) => [x < c ? x : x + 1, y], () => false);
+/** Add a row of squares at position pos (0..h), copying line r. */
+const insertLine = (pos, r) => remapGrid(state.p.w, state.p.h + 1, (x, y) => [x, y < pos ? y : y === pos ? r : y - 1], (x, y) => y === pos);
+const deleteLine = r => remapGrid(state.p.w, state.p.h - 1, (x, y) => [x, y < r ? y : y + 1], () => false);
+/** Add (n > 0) or remove (n < 0) whole rows/columns along one edge of the pattern. */
+function changeEdge(side, n, fill) {
+  const p = state.p, w = p.w, h = p.h, no = () => false;
+  if (n > 0) {
+    if (side === 'top') remapGrid(w, h + n, (x, y) => (y < n ? null : [x, y - n]), no, fill);
+    if (side === 'bottom') remapGrid(w, h + n, (x, y) => (y >= h ? null : [x, y]), no, fill);
+    if (side === 'left') remapGrid(w + n, h, (x, y) => (x < n ? null : [x - n, y]), no, fill);
+    if (side === 'right') remapGrid(w + n, h, (x, y) => (x >= w ? null : [x, y]), no, fill);
+  } else {
+    const k = -n, vertical = side === 'top' || side === 'bottom';
+    if ((vertical ? h : w) - k < 1) { toast('That would remove the whole pattern.', true); return; }
+    if (side === 'top') remapGrid(w, h - k, (x, y) => [x, y + k], no);
+    if (side === 'bottom') remapGrid(w, h - k, (x, y) => [x, y], no);
+    if (side === 'left') remapGrid(w - k, h, (x, y) => [x + k, y], no);
+    if (side === 'right') remapGrid(w - k, h, (x, y) => [x, y], no);
+  }
+  fit();
+}
+
+// ---------------------------------------------------------------- crochet progress
+function setRow(d, opts = {}) {
+  const p = state.p; if (!p) return;
+  p.row = clamp(d, 0, rowCount(p) - 1);
+  if (p.settings.isolate) invalidate();
+  renderRow(); scheduleSave(); requestDraw();
+  if (p.settings.follow || opts.focus) {
+    const order = rowOrder(p, p.row);
+    const target = order.find(i => !p.done[i]) ?? order[0];
+    ensureVisible(target, opts.focus);
+  }
+}
+function markDone(i, val) {
+  const p = state.p;
+  if (p.done[i] === val) return false;
+  p.done[i] = val; return true;
+}
+function afterMark() {
+  const p = state.p;
+  invalidate(); renderRow(); renderProgress(); scheduleSave(); requestDraw();
+  if (p.settings.follow) {
+    const next = rowOrder(p, p.row).find(i => !p.done[i]);
+    if (next !== undefined) ensureVisible(next);
+  }
+}
+function stitchNext() {
+  const p = state.p; if (!p) return;
+  const order = rowOrder(p, p.row);
+  const next = order.find(i => !p.done[i]);
+  if (next === undefined) { if (p.row < rowCount(p) - 1) setRow(p.row + 1); return; }
+  pushUndo(); markDone(next, 1);
+  if (order.every(i => p.done[i])) rowFinished(); else afterMark();
+}
+function rowFinished() {
+  const p = state.p, total = rowCount(p);
+  if (p.row === total - 1) { afterMark(); toast('Last row done — the whole pattern is finished! 🎉'); return; }
+  toast(`Row ${p.row + 1} finished`);
+  if (p.settings.autoAdvance) { invalidate(); renderProgress(); setRow(p.row + 1); } else afterMark();
+}
+function unstitch() {
+  const p = state.p; if (!p) return;
+  const order = rowOrder(p, p.row);
+  let k = -1;
+  for (let j = order.length - 1; j >= 0; j--) if (p.done[order[j]]) { k = j; break; }
+  if (k < 0) {
+    if (p.row === 0) return;
+    const prev = rowOrder(p, p.row - 1);
+    const last = [...prev].reverse().find(i => p.done[i]);
+    pushUndo();
+    p.row--;
+    if (last !== undefined) p.done[last] = 0;
+    if (p.settings.isolate) invalidate();
+    afterMark(); return;
+  }
+  pushUndo(); markDone(order[k], 0); afterMark();
+}
+function finishRow() {
+  const p = state.p; if (!p) return;
+  const order = rowOrder(p, p.row);
+  if (order.every(i => p.done[i])) { if (p.row < rowCount(p) - 1) setRow(p.row + 1); return; }
+  pushUndo(); order.forEach(i => { p.done[i] = 1; }); rowFinished();
+}
+function firstOpenRow() {
+  const p = state.p; if (!p) return;
+  for (let d = 0; d < rowCount(p); d++) if (!rowIsDone(p, d)) { setRow(d, { focus: true }); return; }
+  toast('Every row is finished!');
+}
+
+// ---------------------------------------------------------------- side panels
+function swatch(hex, tag = 'i') {
+  const el = document.createElement(tag); el.style.background = hex; return el;
+}
+
+function renderRow() {
+  const p = state.p; if (!p) return;
+  const total = rowCount(p), d = p.row, asc = isAsc(p, d);
+  const spatial = rowSpatial(p, d), order = asc ? spatial : [...spatial].reverse();
+  const nextI = order.find(i => !p.done[i]);
+  const doneN = order.filter(i => p.done[i]).length;
+
+  $('#rowInput').value = d + 1; $('#rowInput').max = total;
+  $('#rowTotal').textContent = total;
+  $('#btnPrevRow').disabled = d === 0; $('#btnNextRow').disabled = d === total - 1;
+
+  // shaping: does each end of the row grow or shrink compared with the previous row?
+  const leftInc = fromRight(p) ? d <= p.w - 1 : d <= p.h - 1;
+  const rightInc = fromRight(p) ? d <= p.h - 1 : d <= p.w - 1;
+  const startInc = asc ? leftInc : rightInc, endInc = asc ? rightInc : leftInc;
+  const word = inc => inc ? '<b>increase</b>' : '<b>decrease</b>';
+  const shaping = !isC2C(p) ? `line ${d + 1} from the bottom` : d === 0 ? 'first corner square' : `start: ${word(startInc)} · end: ${word(endInc)}`;
+  $('#rowMeta').innerHTML = `<b>${order.length}</b> ${order.length === 1 ? 'square' : 'squares'} · ${doneN} done · ${shaping}`;
+  $('#stripArrow').textContent = asc ? 'work this way →' : '← work this way';
+  [$('#stripLeft').textContent, $('#stripRight').textContent] = rowEnds(p);
+
+  // strip, laid out spatially (left to right as in the turned view)
+  const strip = $('#rowStrip');
+  strip.textContent = '';
+  let nextEl = null;
+  for (const i of spatial) {
+    const b = document.createElement('button');
+    const hex = p.palette[p.cells[i]].hex;
+    b.style.background = hex; b.style.color = inkFor(hex);
+    const k = order.indexOf(i) + 1;
+    b.textContent = k;
+    b.title = `Stitch ${k} – ${p.palette[p.cells[i]].name}${p.done[i] ? ' (done)' : ''}`;
+    if (p.done[i]) b.classList.add('done');
+    if (i === nextI) { b.classList.add('next'); nextEl = b; }
+    b.addEventListener('click', () => { pushUndo(); markDone(i, p.done[i] ? 0 : 1); if (rowIsDone(p, d)) rowFinished(); else afterMark(); });
+    strip.appendChild(b);
+  }
+  if (nextEl) {
+    const target = nextEl.offsetLeft - strip.clientWidth / 2 + 14;
+    strip.scrollLeft = target;
+  }
+
+  // color runs in working order
+  const runsEl = $('#rowRuns'); runsEl.textContent = '';
+  const runs = runsOf(p, order);
+  runs.forEach((r, k) => {
+    const el = document.createElement('span'); el.className = 'run';
+    const allDone = r.cells.every(i => p.done[i]);
+    if (allDone) el.classList.add('done');
+    else if (r.cells.includes(nextI)) el.classList.add('current');
+    el.append(swatch(p.palette[r.c].hex));
+    const b = document.createElement('b'); b.textContent = r.cells.length; el.append(b, ' ' + p.palette[r.c].name);
+    runsEl.append(el);
+    if (k < runs.length - 1) { const a = document.createElement('span'); a.className = 'run arrow'; a.style.border = '0'; a.style.background = 'none'; a.textContent = '›'; runsEl.append(a); }
+  });
+
+  const cur = runsEl.querySelector('.current');
+  if (cur) runsEl.scrollTop = cur.offsetTop - 34;
+
+  const ns = $('#nextStitch');
+  if (nextI === undefined) {
+    ns.innerHTML = d === total - 1 ? '<b>Pattern complete!</b>' : '✓ Row complete';
+  } else {
+    const k = order.indexOf(nextI) + 1;
+    const run = runs.find(r => r.cells.includes(nextI));
+    const inRun = run.cells.indexOf(nextI) + 1;
+    ns.textContent = '';
+    ns.append('Next: stitch ', Object.assign(document.createElement('b'), { textContent: `${k} of ${order.length}` }), ' ',
+      swatch(p.palette[run.c].hex), p.palette[run.c].name,
+      Object.assign(document.createElement('span'), { className: 'muted', textContent: ` (${inRun} of ${run.cells.length})` }));
+  }
+}
+
+function renderProgress() {
+  const p = state.p; if (!p) return;
+  let n = 0; for (let i = 0; i < p.done.length; i++) n += p.done[i];
+  const total = rowCount(p);
+  let rows = 0; for (let d = 0; d < total; d++) if (rowIsDone(p, d)) rows++;
+  const pct = n / p.done.length * 100;
+  $('#progBar').style.width = pct + '%';
+  $('#progText').textContent = `${n.toLocaleString()} of ${p.done.length.toLocaleString()} squares (${pct.toFixed(1)}%) · ${rows} of ${total} rows finished`;
+}
+
+function renderPalette() {
+  const p = state.p; if (!p) return;
+  const counts = new Array(p.palette.length).fill(0);
+  for (let i = 0; i < p.cells.length; i++) counts[p.cells[i]]++;
+  const list = $('#paletteList'); list.textContent = '';
+  p.palette.forEach((c, idx) => {
+    const row = document.createElement('div'); row.className = 'pal-row' + (idx === p.sel ? ' sel' : '');
+    const sw = swatch(c.hex, 'button'); sw.className = 'swatch'; sw.title = 'Paint with this color';
+    sw.addEventListener('click', () => { setSel(idx); if (!['paint', 'fill'].includes(state.tool)) setTool('paint'); });
+    const ci = document.createElement('input'); ci.type = 'color'; ci.value = c.hex; ci.title = 'Change this color';
+    let pending = null;
+    ci.addEventListener('input', () => {
+      if (!pending) pending = snapshot();
+      c.hex = ci.value; sw.style.background = c.hex;
+      invalidate(); requestDraw();
+    });
+    ci.addEventListener('change', () => { if (pending) pushSnap(pending); pending = null; changed(); });
+    const name = document.createElement('input'); name.className = 'name'; name.value = c.name; name.setAttribute('aria-label', 'Color name');
+    name.addEventListener('change', () => { c.name = name.value.trim() || c.name; renderRow(); scheduleSave(); });
+    const cnt = document.createElement('span'); cnt.className = 'count'; cnt.textContent = `${counts[idx].toLocaleString()} ${counts[idx] === 1 ? 'stitch' : 'stitches'}`;
+    cnt.title = `${counts[idx].toLocaleString()} squares of ${c.name} in this pattern`;
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = '×';
+    del.title = 'Remove this color'; del.disabled = p.palette.length < 2;
+    del.addEventListener('click', () => removeColor(idx, counts[idx]));
+    row.append(sw, ci, name, cnt, del);
+    list.append(row);
+  });
+}
+
+async function removeColor(idx, count) {
+  const p = state.p;
+  const into = idx !== p.sel ? p.sel : (idx === 0 ? 1 : 0);
+  if (count && await ask({
+    title: `Remove "${p.palette[idx].name}"?`,
+    message: `Its ${count} squares will become "${p.palette[into].name}" (the selected color). You can undo this.`,
+    ok: 'Remove color',
+  }) !== 'ok') return;
+  pushUndo();
+  for (let i = 0; i < p.cells.length; i++) {
+    const c = p.cells[i];
+    if (c === idx) p.cells[i] = into > idx ? into - 1 : into;
+    else if (c > idx) p.cells[i] = c - 1;
+  }
+  p.palette.splice(idx, 1);
+  const newInto = into > idx ? into - 1 : into;
+  p.sel = p.sel === idx ? newInto : (p.sel > idx ? p.sel - 1 : p.sel);
+  changed();
+}
+
+function renderCurColor() {
+  const p = state.p, well = $('#paintWell'), input = $('#paintColor');
+  if (!p) { well.style.background = 'transparent'; return; }
+  const c = p.palette[p.sel];
+  well.style.background = c.hex; input.value = c.hex;
+  well.title = `Painting with ${c.name}. Click to pick any color.`;
+  // keep the edge-fill choice in step with the palette
+  const ef = $('#edgeFill'), keep = ef.value;
+  ef.textContent = '';
+  p.palette.forEach((col, i) => ef.append(new Option(col.name, i)));
+  ef.value = keep && +keep < p.palette.length ? keep : '0';
+}
+/** Paint with this colour: use the matching palette colour, or add it to the palette. */
+function useColor(hex) {
+  const p = state.p; if (!p) return;
+  const idx = p.palette.findIndex(c => c.hex.toLowerCase() === hex.toLowerCase());
+  if (idx >= 0) setSel(idx);
+  else {
+    if (p.palette.length >= 250) { toast('This pattern already has the most colors allowed.', true); return; }
+    pushUndo();
+    p.palette.push({ hex, name: nameColor(hexToRgb(hex)) });
+    uniqueNames(p.palette);
+    p.sel = p.palette.length - 1;
+    changed();
+    toast(`Added ${p.palette[p.sel].name} to your colors`);
+  }
+  if (!['paint', 'fill'].includes(state.tool)) setTool('paint');
+}
+function renderPalPop() {
+  const p = state.p, pop = $('#palPop'); pop.textContent = '';
+  p.palette.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'pal-pick' + (i === p.sel ? ' sel' : '');
+    b.append(swatch(c.hex), c.name);
+    b.addEventListener('click', () => { setSel(i); if (!['paint', 'fill'].includes(state.tool)) setTool('paint'); pop.hidden = true; });
+    pop.append(b);
+  });
+}
+
+function renderProjects() {
+  const sel = $('#projectSelect'), list = readIndex();
+  sel.textContent = '';
+  if (state.p && !list.some(e => e.id === state.p.id)) list.unshift({ id: state.p.id, name: state.p.name });
+  for (const e of list) {
+    const o = document.createElement('option'); o.value = e.id; o.textContent = e.name;
+    if (state.p && e.id === state.p.id) { o.selected = true; o.textContent = state.p.name; }
+    sel.append(o);
+  }
+  sel.disabled = !list.length;
+}
+
+function syncSettingsUI() {
+  const p = state.p; if (!p) return;
+  for (const el of $$('[data-setting]')) {
+    const v = p.settings[el.dataset.setting];
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+  }
+  $('#btnRotate').setAttribute('aria-pressed', String(turned(p)));
+  $('#btnRotate').disabled = !isC2C(p);
+  $('#btnRotate').title = isC2C(p) ? 'Turn the pattern so rows run flat (R)' : 'Straight rows already run flat';
+  $('#rowEyebrow').textContent = isC2C(p) ? 'C2C row' : 'Row';
+  $('#setName').value = p.name;
+  $('#setW').value = p.w; $('#setH').value = p.h;
+  if (document.activeElement !== $('#setAnchor')) $('#setAnchor').value = p.settings.start === 'br' ? 'br' : 'bl';
+}
+
+function setTool(t) {
+  state.tool = t;
+  if (t !== 'lines') closeLineMenu();
+  $('#btnLineTool').setAttribute('aria-pressed', String(t === 'lines'));
+  $('#lineToolHint').hidden = t !== 'lines';
+  for (const b of $$('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === t));
+  cv.classList.toggle('tool-pan', t === 'pan');
+}
+
+function renderAll() {
+  const has = !!state.p;
+  $('#emptyState').hidden = has;
+  $('#sidebar').style.visibility = has ? '' : 'hidden';
+  for (const b of $$('.tools button, .zoom-ctl button, #btnClearCanvas, .needs-pattern')) b.disabled = !has;
+  renderProjects();
+  if (!has) { syncUndo(); requestDraw(); return; }
+  syncSettingsUI(); renderRow(); renderPalette(); renderProgress(); renderCurColor(); syncUndo();
+  invalidate(); requestDraw();
+}
+
+function openProject(p) {
+  if (state.p) saveNow();
+  state.p = p; state.undo = []; state.redo = []; state.hover = null;
+  renderAll();
+  if (p && p.view && p.view.s) {
+    state.view = { ...p.view }; requestDraw();
+    // the screen may be a different size than last time, so make sure the stitch you're on is visible
+    requestAnimationFrame(() => {
+      const order = rowOrder(p, p.row);
+      ensureVisible(order.find(i => !p.done[i]) ?? order[0]);
+    });
+  } else if (p) requestAnimationFrame(fit);
+  if (p) saveNow();
+}
+
+// ---------------------------------------------------------------- pointer input
+const pts = new Map();
+let gesture = null;
+const localPt = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+function startTool(pt, e) {
+  const p = state.p, c = cellAt(pt);
+  closeLineMenu();
+  const tool = e.altKey && state.tool === 'paint' ? 'pick' : state.tool;
+  gesture = { type: 'tool', tool, last: c, snap: null, dirty: false };
+  if (!c) return;
+  if (tool === 'pick') { setSel(p.cells[c.i]); return; }
+  if (tool === 'lines') { openLineMenu(c, pt); return; }
+  if (tool === 'fill') {
+    if (p.cells[c.i] !== p.sel) { pushUndo(); flood(c.x, c.y, p.sel); changed(); }
+    return;
+  }
+  gesture.snap = snapshot();
+  if (tool === 'paint') { gesture.dirty = paintCell(c.i); }
+  if (tool === 'mark' || tool === 'unmark') {
+    gesture.value = tool === 'unmark' ? 0 : p.done[c.i] ? 0 : 1;
+    gesture.dirty = markDone(c.i, gesture.value);
+  }
+  if (gesture.dirty) { invalidate(); requestDraw(); }
+}
+function moveTool(pt) {
+  const g = gesture, p = state.p;
+  if (!g.snap) return;
+  const { fx, fy } = toCell(pt.x, pt.y);
+  const c = { x: Math.floor(fx), y: Math.floor(fy) };
+  const from = g.last || c;
+  if (g.last && from.x === c.x && from.y === c.y) return;
+  let any = false;
+  lineCells(from, c, (x, y) => {
+    if (x < 0 || y < 0 || x >= p.w || y >= p.h) return;
+    const i = y * p.w + x;
+    if (g.tool === 'paint') any = paintCell(i) || any;
+    else any = markDone(i, g.value) || any;
+  });
+  g.last = c;
+  if (any) { g.dirty = true; invalidate(); requestDraw(); }
+}
+function endTool() {
+  const g = gesture;
+  if (g.snap && g.dirty) {
+    pushSnap(g.snap);
+    if (g.tool === 'paint') changed(); else afterMark();
+  }
+}
+function cancelTool() {
+  const g = gesture;
+  if (g && g.type === 'tool' && g.snap && g.dirty) { restore(g.snap); changed(); }
+}
+
+cv.addEventListener('pointerdown', e => {
+  if (!state.p) return;
+  if (state.tool !== 'lines') closeLineMenu();
+  cv.setPointerCapture(e.pointerId);
+  const pt = localPt(e); pts.set(e.pointerId, pt);
+  if (pts.size === 2) {
+    cancelTool();
+    const [a, b] = [...pts.values()];
+    gesture = { type: 'pinch', dist: dist(a, b) || 1, mid: mid(a, b) };
+    return;
+  }
+  if (pts.size > 2) return;
+  if (state.tool === 'pan' || e.button === 1 || e.button === 2 || state.space) {
+    gesture = { type: 'pan', last: pt }; cv.classList.add('grabbing'); return;
+  }
+  if (e.button !== 0) return;
+  startTool(pt, e);
+});
+cv.addEventListener('pointermove', e => {
+  if (!state.p) return;
+  const pt = localPt(e);
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, pt);
+  if (e.pointerType === 'mouse') updateHover(pt);
+  if (!gesture) return;
+  if (gesture.type === 'pinch' && pts.size >= 2) {
+    const [a, b] = [...pts.values()], d = dist(a, b), m = mid(a, b);
+    state.view.ox += m.x - gesture.mid.x; state.view.oy += m.y - gesture.mid.y;
+    zoomAt(m.x, m.y, d / gesture.dist);
+    gesture.dist = d || 1; gesture.mid = m; viewChanged();
+  } else if (gesture.type === 'pan') {
+    state.view.ox += pt.x - gesture.last.x; state.view.oy += pt.y - gesture.last.y;
+    gesture.last = pt; viewChanged();
+  } else if (gesture.type === 'tool') moveTool(pt);
+});
+function pointerEnd(e) {
+  if (!pts.has(e.pointerId)) return;
+  pts.delete(e.pointerId);
+  if (gesture && (gesture.type === 'pinch' || gesture.type === 'none')) {
+    gesture = pts.size ? { type: 'none' } : null; return;
+  }
+  if (gesture && gesture.type === 'tool') endTool();
+  gesture = null; cv.classList.remove('grabbing');
+}
+cv.addEventListener('pointerup', pointerEnd);
+cv.addEventListener('pointercancel', pointerEnd);
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerleave', () => { state.hover = null; $('#hoverInfo').hidden = true; requestDraw(); });
+cv.addEventListener('wheel', e => {
+  if (!state.p) return;
+  e.preventDefault();
+  const pt = localPt(e);
+  const delta = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
+  zoomAt(pt.x, pt.y, Math.exp(-delta * 0.0018));
+  viewChanged(); updateHover(pt);
+}, { passive: false });
+
+function updateHover(pt) {
+  const p = state.p, c = cellAt(pt), info = $('#hoverInfo');
+  const prev = state.hover;
+  state.hover = c;
+  if ((prev && prev.i) !== (c && c.i)) requestDraw();
+  if (!c) { info.hidden = true; return; }
+  const d = rowOf(p, c.x, c.y), k = rowOrder(p, d).indexOf(c.i) + 1;
+  const col = p.palette[p.cells[c.i]];
+  info.textContent = '';
+  info.append(swatch(col.hex), `${col.name} · column ${colU(p, c.x) + 1} from ${fromRight(p) ? 'right' : 'left'}, line ${p.h - c.y} from bottom · ${isC2C(p) ? "C2C row" : "row"} ${d + 1}, stitch ${k}${p.done[c.i] ? ' · ✓' : ''}`);
+  info.hidden = false;
+}
+
+// ---------------------------------------------------------------- keyboard
+window.addEventListener('keydown', e => {
+  const t = e.target;
+  if (t.closest && t.closest('input, select, textarea, dialog')) return;
+  if (!state.p) return;
+  const k = e.key;
+  if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const W = cv.clientWidth / 2, H = cv.clientHeight / 2;
+  switch (k) {
+    case ' ': if (t === document.body || t === cv) { e.preventDefault(); state.space = true; cv.classList.add('tool-pan'); } break;
+    case 'n': case 'N': case 'Enter': if (t.tagName !== 'BUTTON' || k !== 'Enter') { e.preventDefault(); stitchNext(); } break;
+    case 'Backspace': e.preventDefault(); unstitch(); break;
+    case '[': setRow(state.p.row - 1); break;
+    case ']': setRow(state.p.row + 1); break;
+    case 'r': case 'R': setRotate(!state.p.settings.rotate); break;
+    case 'f': case 'F': fit(); break;
+    case '+': case '=': zoomAt(W, H, 1.25); viewChanged(); break;
+    case '-': case '_': zoomAt(W, H, 0.8); viewChanged(); break;
+    case 'h': case 'H': setTool('pan'); break;
+    case 'm': case 'M': setTool('mark'); break;
+    case 'u': case 'U': setTool('unmark'); break;
+    case 'p': case 'P': $('#btnPanels').click(); break;
+    case 'Escape': closeLineMenu(); break;
+    case 'b': case 'B': setTool('paint'); break;
+    case 'g': case 'G': setTool('fill'); break;
+    case 'i': case 'I': setTool('pick'); break;
+  }
+});
+window.addEventListener('keyup', e => {
+  if (e.key === ' ') { state.space = false; cv.classList.toggle('tool-pan', state.tool === 'pan'); }
+});
+
+// ---------------------------------------------------------------- toolbar & panel wiring
+for (const b of $$('[data-tool]')) b.addEventListener('click', () => setTool(b.dataset.tool));
+$('#btnUndo').addEventListener('click', undo);
+$('#btnRedo').addEventListener('click', redo);
+$('#btnZoomIn').addEventListener('click', () => { zoomAt(cv.clientWidth / 2, cv.clientHeight / 2, 1.3); viewChanged(); });
+$('#btnZoomOut').addEventListener('click', () => { zoomAt(cv.clientWidth / 2, cv.clientHeight / 2, 1 / 1.3); viewChanged(); });
+$('#btnFit').addEventListener('click', fit);
+$('#btnRotate').addEventListener('click', () => setRotate(!state.p.settings.rotate));
+$('#btnFocusRow').addEventListener('click', () => {
+  const p = state.p, order = rowOrder(p, p.row);
+  if (state.view.s < 12) zoomAt(cv.clientWidth / 2, cv.clientHeight / 2, 18 / state.view.s);
+  ensureVisible(order.find(i => !p.done[i]) ?? order[0], true);
+});
+
+$('#btnPrevRow').addEventListener('click', () => setRow(state.p.row - 1));
+$('#btnNextRow').addEventListener('click', () => setRow(state.p.row + 1));
+$('#rowInput').addEventListener('change', e => setRow((parseInt(e.target.value, 10) || 1) - 1, { focus: true }));
+$('#btnStitch').addEventListener('click', stitchNext);
+$('#btnUnstitch').addEventListener('click', unstitch);
+$('#btnRowDone').addEventListener('click', finishRow);
+$('#btnFirstOpen').addEventListener('click', firstOpenRow);
+
+for (const el of $$('[data-setting]')) {
+  el.addEventListener(el.type === 'checkbox' || el.type === 'color' ? 'change' : 'input', () => {
+    const p = state.p; if (!p) return;
+    const key = el.dataset.setting;
+    let val = el.type === 'checkbox' ? el.checked : el.type === 'color' || el.tagName === 'SELECT' ? el.value : parseFloat(el.value);
+    if (typeof val === 'number' && !Number.isFinite(val)) return;
+    if (key === 'gridEvery') val = clamp(Math.round(val), 1, 200);
+    if (key === 'rotate') { setRotate(val); return; }
+    const W = cv.clientWidth, H = cv.clientHeight, c = toCell(W / 2, H / 2);
+    p.settings[key] = val;
+    if (key === 'reverse' || key === 'alternate') renderRow();
+    if (key === 'start' || key === 'method') {
+      // keep the same spot in the middle of the screen while the view turns
+      const sp = toScreen(c.fx, c.fy);
+      state.view.ox += W / 2 - sp.x; state.view.oy += H / 2 - sp.y;
+      syncSettingsUI(); renderProgress(); setRow(p.row);
+    }
+    if (key === 'follow' && val) setRow(p.row);
+    invalidate(); requestDraw(); scheduleSave();
+  });
+}
+$('#setName').addEventListener('change', e => {
+  state.p.name = e.target.value.trim() || 'Untitled'; saveNow(); renderProjects();
+});
+$('#btnResize').addEventListener('click', () => {
+  const w = clamp(parseInt($('#setW').value, 10) || state.p.w, 1, 1000);
+  const h = clamp(parseInt($('#setH').value, 10) || state.p.h, 1, 1000);
+  resizePattern(w, h, $('#setAnchor').value);
+});
+$('#btnAddColor').addEventListener('click', () => {
+  const p = state.p;
+  if (p.palette.length >= 250) return;
+  pushUndo();
+  p.palette.push({ hex: '#8a8a8a', name: 'Color ' + (p.palette.length + 1) });
+  p.sel = p.palette.length - 1;
+  changed();
+});
+
+$('#projectSelect').addEventListener('change', e => {
+  const p = loadProject(e.target.value);
+  if (p) openProject(p); else { toast('That pattern could not be opened.', true); renderProjects(); }
+});
+
+// data
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const safeName = s => (s || 'pattern').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'pattern';
+$('#btnExportJson').addEventListener('click', () => {
+  saveNow();
+  download(new Blob([JSON.stringify(serialize(state.p))], { type: 'application/json' }), safeName(state.p.name) + '.pattern.json');
+});
+$('#btnImportJson').addEventListener('click', () => $('#jsonFile').click());
+$('#jsonFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const p = deserialize(JSON.parse(await f.text()));
+    if (readIndex().some(x => x.id === p.id)) {
+      const a = await ask({ title: `You already have "${p.name}"`, message: 'Replace it with the backup, or keep both?', ok: 'Replace', alt: 'Keep both' });
+      if (a === 'cancel') return;
+      if (a === 'alt') { p.id = uid(); p.name += ' (backup)'; }
+    }
+    p.view = null;
+    openProject(p);
+    toast(`Opened "${p.name}"`);
+  } catch (err) { toast('That file is not a Pixel Pattern Keeper backup.', true); }
+});
+$('#btnExportPng').addEventListener('click', () => {
+  const p = state.p, s = p.settings;
+  const cs = clamp(Math.floor(4000 / Math.max(p.w, p.h)), 4, 20);
+  const c = document.createElement('canvas'); c.width = p.w * cs + 1; c.height = p.h * cs + 1;
+  const x = c.getContext('2d');
+  for (let i = 0; i < p.cells.length; i++) {
+    x.fillStyle = p.palette[p.cells[i]].hex;
+    x.fillRect((i % p.w) * cs, ((i / p.w) | 0) * cs, cs, cs);
+  }
+  x.translate(0.5, 0.5);
+  x.beginPath();
+  for (let i = 0; i <= p.w; i++) { x.moveTo(i * cs, 0); x.lineTo(i * cs, p.h * cs); }
+  for (let j = 0; j <= p.h; j++) { x.moveTo(0, j * cs); x.lineTo(p.w * cs, j * cs); }
+  x.strokeStyle = 'rgba(128,128,128,.6)'; x.lineWidth = 1; x.stroke();
+  const g = Math.max(1, s.gridEvery | 0);
+  x.beginPath();
+  for (let i = 0; i <= p.w; i += g) { x.moveTo(i * cs, 0); x.lineTo(i * cs, p.h * cs); }
+  for (let j = p.h; j >= 0; j -= g) { x.moveTo(0, j * cs); x.lineTo(p.w * cs, j * cs); }
+  x.strokeStyle = s.gridColor; x.lineWidth = 2; x.stroke();
+  c.toBlob(b => download(b, safeName(p.name) + '.png'));
+});
+$('#btnDuplicate').addEventListener('click', () => {
+  saveNow();
+  const p = deserialize(serialize(state.p));
+  p.id = uid(); p.name = state.p.name + ' (copy)';
+  openProject(p); toast('Made a copy');
+});
+$('#btnResetProgress').addEventListener('click', async () => {
+  if (await ask({ title: 'Clear every ✓ mark?', message: 'All progress in this pattern is cleared and you go back to row 1. You can undo this.', ok: 'Clear all marks' }) !== 'ok') return;
+  pushUndo(); state.p.done.fill(0); state.p.row = 0; changed(); setRow(0);
+});
+$('#btnDelete').addEventListener('click', async () => {
+  const p = state.p;
+  if (await ask({ title: `Delete "${p.name}"?`, message: "This removes it from this browser and can't be undone. Download a backup first if you might want it.", ok: 'Delete pattern', danger: true }) !== 'ok') return;
+  store.del(keyProj(p.id));
+  const list = readIndex().filter(e => e.id !== p.id); writeIndex(list);
+  state.p = null;
+  const next = list.length ? loadProject(list[0].id) : null;
+  if (next) openProject(next); else { store.del(KEY_LAST); renderAll(); }
+});
+
+// ---------------------------------------------------------------- new pattern dialog
+const dlgNew = $('#dlgNew');
+function showNew() {
+  $('#newW').value = ''; $('#newH').value = '';
+  dlgNew.showModal();
+}
+$('#btnNew').addEventListener('click', showNew);
+$('#emptyNew').addEventListener('click', showNew);
+$('#newFromPicture').addEventListener('click', () => { dlgNew.close('cancel'); showImport(); });
+$('#newFromBackup').addEventListener('click', () => { dlgNew.close('cancel'); $('#jsonFile').click(); });
+$('#emptyBackup').addEventListener('click', () => $('#jsonFile').click());
+/** The crochet method chosen in the New or Import dialog. */
+const readStyle = pre => ({
+  method: $(`#${pre}Method`).value, start: $(`#${pre}Start`).value, alternate: $(`#${pre}Alt`).checked,
+});
+dlgNew.querySelector('form').addEventListener('submit', e => {
+  if (!e.submitter || e.submitter.value !== 'ok') return;
+  const w = clamp(parseInt($('#newW').value, 10) || 100, 1, 1000), h = clamp(parseInt($('#newH').value, 10) || 100, 1, 1000);
+  const bg = $('#newBg').value;
+  const fg = lum(hexToRgb(bg)) > 128 ? '#111111' : '#ffffff';
+  const palette = [{ hex: bg, name: nameColor(hexToRgb(bg)) }, { hex: fg, name: nameColor(hexToRgb(fg)) }];
+  const p = makeProject({ name: $('#newName').value.trim() || 'My pattern', w, h, palette: uniqueNames(palette) });
+  Object.assign(p.settings, readStyle('new'));
+  openProject(p);
+  setTool('paint');
+});
+
+// ---------------------------------------------------------------- picture import
+const dlgImp = $('#dlgImport');
+const imp = { data: null, iw: 0, ih: 0, bitmap: null, result: null, timer: 0 };
+const impNum = id => parseInt($(id).value, 10) || 0;
+
+/** Open the importer with every field back at its starting value. */
+function showImport() {
+  Object.assign(imp, { data: null, iw: 0, ih: 0, bitmap: null, result: null, prof: null });
+  clearTimeout(imp.timer);
+  $('#impFile').value = '';
+  const defaults = {
+    '#impName': 'Imported pattern', '#impW': '', '#impH': '', '#impK': 4,
+    '#impCL': 0, '#impCT': 0, '#impCR': 0, '#impCB': 0, '#impMethod': 'c2c', '#impStart': 'bl',
+  };
+  for (const [id, v] of Object.entries(defaults)) $(id).value = v;
+  $('#impAuto').checked = true; $('#impCenter').checked = true; $('#impAlt').checked = true;
+  for (const id of ['#impSrc', '#impOut']) { const c = $(id); c.width = 10; c.height = 10; }
+  $('#impPal').textContent = '';
+  $('#impNote').textContent = 'Choose a picture and the size will be worked out for you.';
+  $('#impCreate').disabled = true;
+  dlgImp.showModal();
+}
+$('#btnImportImg').addEventListener('click', showImport);
+$('#emptyImport').addEventListener('click', showImport);
+
+$('#impFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const bmp = await createImageBitmap(f);
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0);
+    imp.data = x.getImageData(0, 0, c.width, c.height).data; imp.iw = c.width; imp.ih = c.height; imp.bitmap = c; imp.prof = null;
+    $('#impName').value = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+    edgeProfiles();
+    autoSize();
+  } catch (err) { toast('Could not read that picture.', true); }
+});
+$('#impAutoSize').addEventListener('click', () => {
+  if (!imp.data) { toast('Choose a picture first.'); return; }
+  autoSize();
+});
+
+/**
+ * Work out how many squares wide and tall the picture is from what it looks like:
+ * first look for a drawn grid, then for evenly sized blocks of colour.
+ */
+function autoSize() {
+  for (const id of ['#impCL', '#impCT', '#impCR', '#impCB']) $(id).value = 0;
+  $('#impAuto').checked = true;
+  // does a strip of the picture (columns or rows a..b) hold more than one flat colour?
+  const busy = vertical => (a, b) => {
+    const { data, iw, ih } = imp;
+    let n = 0, s = 0, s2 = 0;
+    const across = vertical ? ih : iw, step = Math.max(1, Math.floor(across / 400));
+    for (let t = a; t < b; t++) for (let u = 0; u < across; u += step) {
+      const o = (vertical ? u * iw + t : t * iw + u) * 4;
+      const l = data[o] * 0.299 + data[o + 1] * 0.587 + data[o + 2] * 0.114;
+      s += l; s2 += l * l; n++;
+    }
+    return n > 0 && Math.sqrt(Math.max(0, s2 / n - (s / n) ** 2)) > 12;
+  };
+  const gw = detectCount(imp.prof.col, imp.iw, busy(true)), gh = detectCount(imp.prof.row, imp.ih, busy(false));
+  let w = 0, h = 0, note = '';
+  if (gw && gh) {
+    w = gw; h = gh; $('#impCenter').checked = true;
+    note = `Found a grid of ${w} × ${h} squares.`;
+  } else {
+    const bx = blockSize(true), by = blockSize(false);
+    if (bx && by) {
+      // pixel art without grid lines: blocks are usually square, so trust the clearer direction
+      // (when both directions roughly agree, blend them by how clear each one was)
+      const b = bx.fit >= by.fit ? bx : by;
+      const same = Math.abs(bx.p - by.p) / b.p < 0.12;
+      const px = same ? (bx.p * bx.fit + by.p * by.fit) / (bx.fit + by.fit) : b.p, py = px;
+      b.p = px;
+      w = clamp(Math.round(imp.iw / px), 1, 1000); h = clamp(Math.round(imp.ih / py), 1, 1000);
+      $('#impCenter').checked = false;
+      note = `The picture's blocks look about ${b.p.toFixed(1)} pixels across, so it's about ${w} × ${h} squares.`;
+    } else if (imp.iw <= 200 && imp.ih <= 200) {
+      // a tiny picture with no larger blocks: one pixel per square
+      w = imp.iw; h = imp.ih; $('#impCenter').checked = false;
+      note = `This looks like one square per pixel (${w} × ${h}).`;
+    }
+  }
+  $('#impW').value = w || ''; $('#impH').value = h || '';
+  $('#impNote').textContent = w
+    ? note + " If that's not right, type the correct numbers."
+    : "Couldn't work out the size from this picture. Type how many squares wide and tall you want.";
+  updateImport();
+}
+
+/**
+ * Pixel art without grid lines: measure the distances between sharp colour changes along rows
+ * (horizontal) or columns. They come in whole multiples of the block size, and single-block
+ * runs are common, so the block size is the shortest distance that shows up often.
+ */
+function blockSize(horizontal) {
+  const { data, iw, ih } = imp;
+  const L = horizontal ? iw : ih, lines = horizontal ? ih : iw, gaps = [];
+  const step = Math.max(1, Math.floor(lines / 300));
+  for (let a = 0; a < lines; a += step) {
+    let run = null, last = null;
+    const close = () => { const c = (run.s + run.e) / 2; if (last !== null) gaps.push(c - last); last = c; };
+    for (let t = 1; t < L; t++) {
+      const o = horizontal ? (a * iw + t) * 4 : (t * iw + a) * 4, q = horizontal ? o - 4 : o - iw * 4;
+      const d = Math.max(Math.abs(data[o] - data[q]), Math.abs(data[o + 1] - data[q + 1]), Math.abs(data[o + 2] - data[q + 2]));
+      if (d <= 40) continue;
+      // a blurry edge spans a couple of pixels: treat it as one change at its middle
+      if (run && t - run.e <= 2) run.e = t;
+      else { if (run) close(); run = { s: t, e: t }; }
+    }
+    if (run) close();
+  }
+  if (gaps.length < 30) return null;
+  // histogram in half-pixel bins, lightly smoothed
+  const H = new Float32Array(400);
+  for (const d of gaps) { const b = Math.round(d * 2); if (b < 400) H[b]++; }
+  const S = H.map((v, i) => (H[i - 1] || 0) * 0.5 + v + (H[i + 1] || 0) * 0.5);
+  const isPeak = i => S[i] >= S[i - 1] && S[i] >= S[i + 1];
+  let top = 6;
+  for (let i = 6; i < 399; i++) if (S[i] > S[top]) top = i;
+  // the biggest peak might be two or three blocks; step down while a real peak sits at a half or third of it
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const k of [2, 3]) {
+      const c = Math.round(top / k);
+      if (c < 6) continue;
+      for (let i = Math.max(6, Math.round(c * 0.9)); i <= Math.round(c * 1.1); i++) {
+        if (isPeak(i) && S[i] >= S[top] * 0.3) { top = i; changed = true; break; }
+      }
+      if (changed) break;
+    }
+  }
+  // refine using every gap that is a whole number of blocks
+  let p = top / 2;
+  for (let it = 0; it < 5; it++) {
+    let sd = 0, sk = 0;
+    for (const d of gaps) {
+      const k = Math.round(d / p);
+      if (k < 1 || k > 8 || Math.abs(d - k * p) > 0.3 * p) continue;
+      sd += d; sk += k;
+    }
+    if (!sk) return null;
+    p = sd / sk;
+  }
+  let fit = 0, n = 0;
+  for (const d of gaps) {
+    const k = Math.round(d / p);
+    if (k < 1 || k > 8) continue;
+    n++; if (Math.abs(d - k * p) < 0.2 * p) fit++;
+  }
+  fit /= n || 1;
+  return p >= 3 && fit >= 0.35 ? { p, fit } : null;
+}
+for (const id of ['#impW', '#impH', '#impK', '#impCL', '#impCT', '#impCR', '#impCB', '#impCenter', '#impAuto']) {
+  $(id).addEventListener('input', () => {
+    if (/^#impC[LTRB]$/.test(id)) $('#impAuto').checked = false;
+    clearTimeout(imp.timer); imp.timer = setTimeout(updateImport, 150);
+  });
+}
+
+/**
+ * Find k colours among the picture's pixels (k-means), then give each grid square the colour
+ * most of its pixels belong to. Voting, rather than averaging, keeps grid lines drawn in the
+ * picture from blending into fake in-between colours.
+ */
+function convertImage(w, h, k, crop, centerOnly) {
+  const { data, iw, ih } = imp;
+  const cw = (iw - crop.l - crop.r) / w, ch = (ih - crop.t - crop.b) / h;
+  const n = w * h;
+  const m0 = centerOnly ? 0.25 : 0, m1 = centerOnly ? 0.75 : 1;
+  const span = (start, size, max) => {
+    const s = clamp(Math.floor(start + size * m0), 0, max - 1);
+    return [s, clamp(Math.max(s + 1, Math.round(start + size * m1)), 1, max)];
+  };
+  const xr = [], yr = [];
+  for (let cx = 0; cx < w; cx++) xr.push(span(crop.l + cx * cw, cw, iw));
+  for (let cy = 0; cy < h; cy++) yr.push(span(crop.t + cy * ch, ch, ih));
+
+  // pixels to learn the colours from (capped so big pictures stay quick)
+  let total = 0;
+  for (const [a, b] of xr) total += b - a;
+  let rows = 0; for (const [a, b] of yr) rows += b - a;
+  total *= rows;
+  const step = Math.max(1, Math.ceil(total / 80000));
+  // colours are compared in Lab space, which matches how different they look to the eye
+  const labCache = new Map();
+  const labOf = o => {
+    const key = data[o] << 16 | data[o + 1] << 8 | data[o + 2];
+    let v = labCache.get(key);
+    if (!v) { v = rgbToLab(data[o], data[o + 1], data[o + 2]); labCache.set(key, v); }
+    return v;
+  };
+  const S = [], R = [];
+  let t = 0;
+  for (let cy = 0; cy < h; cy++) for (let y = yr[cy][0]; y < yr[cy][1]; y++)
+    for (let cx = 0; cx < w; cx++) for (let x = xr[cx][0]; x < xr[cx][1]; x++) {
+      if (t++ % step) continue;
+      const o = (y * iw + x) * 4;
+      S.push(...labOf(o)); R.push(data[o], data[o + 1], data[o + 2]);
+    }
+  const ns = S.length / 3;
+  const { centers: labC, labels: sl } = kmeans(Float32Array.from(S), ns, k);
+  const centers = labC.map(() => [0, 0, 0, 0]);
+  for (let i = 0; i < ns; i++) { const c = centers[sl[i]]; c[0] += R[i * 3]; c[1] += R[i * 3 + 1]; c[2] += R[i * 3 + 2]; c[3]++; }
+  centers.forEach(c => { const m = c[3] || 1; c.length = 3; c[0] /= m; c[1] /= m; c[2] /= m; });
+  const near = o => {
+    const [L, A, B] = labOf(o);
+    let bj = 0, bd = Infinity;
+    for (let j = 0; j < labC.length; j++) {
+      const c = labC[j], d = (L - c[0]) ** 2 + (A - c[1]) ** 2 + (B - c[2]) ** 2;
+      if (d < bd) { bd = d; bj = j; }
+    }
+    return bj;
+  };
+  const labels = new Uint8Array(n), votes = new Uint32Array(centers.length);
+  for (let cy = 0; cy < h; cy++) for (let cx = 0; cx < w; cx++) {
+    votes.fill(0);
+    for (let y = yr[cy][0]; y < yr[cy][1]; y++) for (let x = xr[cx][0]; x < xr[cx][1]; x++) {
+      const o = (y * iw + x) * 4; votes[near(o)]++;
+    }
+    let best = 0; for (let j = 1; j < votes.length; j++) if (votes[j] > votes[best]) best = j;
+    labels[cy * w + cx] = best;
+  }
+
+  // drop unused colours, sort dark → light
+  const used = centers.map((c, i) => ({ c, i, n: 0 }));
+  for (let i = 0; i < n; i++) used[labels[i]].n++;
+  const keep = used.filter(u => u.n > 0).sort((a, b) => lum(a.c) - lum(b.c));
+  const remap = new Uint8Array(centers.length);
+  keep.forEach((u, j) => { remap[u.i] = j; });
+  const cells = new Uint8Array(n);
+  for (let i = 0; i < n; i++) cells[i] = remap[labels[i]];
+  const palette = uniqueNames(keep.map(u => ({ hex: rgbToHex(...u.c), name: nameColor(u.c) })));
+  return { w, h, cells, palette, counts: keep.map(u => u.n) };
+}
+
+function kmeans(S, n, k) {
+  k = Math.min(k, n);
+  const C = [];
+  // start from the darkest square, then repeatedly add the square farthest from every chosen centre
+  let first = 0, best = Infinity;
+  for (let i = 0; i < n; i++) if (S[i * 3] < best) { best = S[i * 3]; first = i; }
+  C.push([S[first * 3], S[first * 3 + 1], S[first * 3 + 2]]);
+  const dmin = new Float32Array(n).fill(Infinity);
+  const d2 = (i, c) => (S[i * 3] - c[0]) ** 2 + (S[i * 3 + 1] - c[1]) ** 2 + (S[i * 3 + 2] - c[2]) ** 2;
+  while (C.length < k) {
+    const c = C[C.length - 1]; let far = 0, fd = -1;
+    for (let i = 0; i < n; i++) { const d = d2(i, c); if (d < dmin[i]) dmin[i] = d; if (dmin[i] > fd) { fd = dmin[i]; far = i; } }
+    if (fd <= 0) break;
+    C.push([S[far * 3], S[far * 3 + 1], S[far * 3 + 2]]);
+  }
+  const labels = new Uint8Array(n);
+  for (let it = 0; it < 25; it++) {
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      let bj = 0, bd = Infinity;
+      for (let j = 0; j < C.length; j++) { const d = d2(i, C[j]); if (d < bd) { bd = d; bj = j; } }
+      if (labels[i] !== bj) { labels[i] = bj; moved++; }
+    }
+    const sum = C.map(() => [0, 0, 0, 0]);
+    for (let i = 0; i < n; i++) { const s = sum[labels[i]]; s[0] += S[i * 3]; s[1] += S[i * 3 + 1]; s[2] += S[i * 3 + 2]; s[3]++; }
+    sum.forEach((s, j) => { if (s[3]) C[j] = [s[0] / s[3], s[1] / s[3], s[2] / s[3]]; });
+    if (!moved && it) break;
+  }
+  return { centers: C, labels };
+}
+
+/**
+ * Edge strength per column and per row of the picture. Square borders (and drawn grid lines)
+ * show up as peaks, so the trim that puts the least edge inside the squares lines the grid up.
+ */
+function edgeProfiles() {
+  const { data, iw, ih } = imp, L = new Float32Array(iw * ih);
+  for (let i = 0; i < iw * ih; i++) L[i] = data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
+  const col = new Float32Array(iw), row = new Float32Array(ih);
+  for (let y = 1; y < ih; y++) for (let x = 1; x < iw; x++) {
+    const i = y * iw + x;
+    col[x] += Math.abs(L[i] - L[i - 1]);
+    row[y] += Math.abs(L[i] - L[i - iw]);
+  }
+  imp.prof = { col, row };
+}
+function bestTrim(prof, len, n) {
+  const pre = new Float64Array(len + 1);
+  for (let i = 0; i < len; i++) pre[i + 1] = pre[i] + prof[i];
+  const maxT = Math.min(Math.floor(len / 4), Math.ceil(len / n * 2) + 4);
+  let best = [0, 0], bc = Infinity;
+  for (let a = 0; a <= maxT; a++) for (let b = 0; b <= maxT; b++) {
+    const cw = (len - a - b) / n; if (cw < 1) continue;
+    let cost = 0;
+    for (let i = 0; i < n; i++) {
+      const s = a + i * cw, x0 = Math.round(s + cw * 0.2), x1 = Math.max(x0 + 1, Math.round(s + cw * 0.8));
+      cost += (pre[Math.min(x1, len)] - pre[x0]) / (x1 - x0);
+    }
+    if (cost < bc - 1e-6) { bc = cost; best = [a, b]; }
+  }
+  return best;
+}
+/**
+ * Work out how many squares fit along one side of the picture. Square borders (or drawn grid
+ * lines) repeat at a steady spacing, so try every spacing and starting offset and keep the one
+ * whose positions land on the strongest edges. Returns 0 when no steady grid shows up.
+ */
+function detectCount(prof, L, stripBusy) {
+  // P[x] = edge strength in a 3-pixel window around x
+  const P = new Float32Array(L);
+  let total = 0;
+  for (let i = 0; i < L; i++) { P[i] = (prof[i - 1] || 0) + prof[i] + (prof[i + 1] || 0); total += prof[i]; }
+  if (!total) return 0;
+  // A spacing scores by how much of all the edge energy its positions catch, minus how much of
+  // the picture its windows cover. Single squares catch nearly everything; bigger blocks
+  // (every 5 or 10 squares) miss the edges between; tiny spacings cover everything and score low.
+  let best = null;
+  for (let p = 3; p <= L / 6; p += 0.02) {
+    let bc = -1, bph = 0;
+    for (let ph = 0; ph < p; ph++) {
+      let sum = 0;
+      for (let x = ph; x < L - 0.5; x += p) sum += P[Math.round(x)];
+      if (sum > bc) { bc = sum; bph = ph; }
+    }
+    const score = bc / total - 3 / p;
+    if (!best || score > best.score) best = { p, ph: bph, score, avg: bc / Math.ceil((L - bph) / p) };
+  }
+  if (!best || best.score < 0.15) return 0;
+  // The penalty above nudges toward slightly-too-big spacings, so fine-tune: near that spacing,
+  // keep the one whose positions catch the most edge energy.
+  // (Each position is scored against the average, so positions that land on nothing count
+  // against a spacing instead of being free.)
+  const meanP = P.reduce((a, b) => a + b, 0) / L;
+  let fine = null;
+  for (let p = best.p * 0.97; p <= best.p * 1.03; p += 0.004) {
+    for (let ph = 0; ph < p; ph += 0.25) {
+      let sum = 0, n = 0;
+      for (let x = ph; x < L - 0.5; x += p) { sum += P[Math.round(x)]; n++; }
+      const gain = sum - n * meanP;
+      if (!fine || gain > fine.gain) fine = { p, ph, gain, avg: sum / n };
+    }
+  }
+  const { p, ph } = fine;
+  // the first and last strong edges mark the ends of the grid
+  const lines = [];
+  for (let x = ph; x < L - 0.5; x += p) if (P[Math.round(x)] > fine.avg * 0.3) lines.push(x);
+  if (lines.length < 2) return 0;
+  const first = lines[0], last = lines[lines.length - 1];
+  // Between the outer edges and the picture border there may be blank margin, or (when the grid
+  // has no outline) more squares. Count squares only where that strip has pattern in it.
+  // (the strip checked stays a little clear of the edge itself, which sits a pixel either side)
+  const side = (a, b) => (b - a > p * 0.7 && stripBusy(Math.round(a + p * 0.3), Math.round(b - p * 0.3)) ? Math.round((b - a) / p) : 0);
+  return clamp(Math.round((last - first) / p) + side(0, first) + side(last, L), 1, 1000);
+}
+
+function autoTrim() {
+  if (!imp.data) return;
+  if (!imp.prof) edgeProfiles();
+  const w = clamp(impNum('#impW'), 1, 1000), h = clamp(impNum('#impH'), 1, 1000);
+  const [l, r] = bestTrim(imp.prof.col, imp.iw, w), [t, b] = bestTrim(imp.prof.row, imp.ih, h);
+  $('#impCL').value = l; $('#impCR').value = r; $('#impCT').value = t; $('#impCB').value = b;
+}
+
+function updateImport() {
+  if (!imp.data) return;
+  if (!impNum('#impW') || !impNum('#impH')) {
+    // no size yet: show the picture alone and wait for one
+    const src = $('#impSrc'), scale = Math.min(1, 380 / imp.iw);
+    src.width = Math.round(imp.iw * scale); src.height = Math.round(imp.ih * scale);
+    src.getContext('2d').drawImage(imp.bitmap, 0, 0, src.width, src.height);
+    const out = $('#impOut'); out.width = 10; out.height = 10;
+    $('#impPal').textContent = '';
+    imp.result = null; $('#impCreate').disabled = true;
+    return;
+  }
+  if ($('#impAuto').checked) autoTrim();
+  const w = clamp(impNum('#impW'), 1, 1000), h = clamp(impNum('#impH'), 1, 1000), k = clamp(impNum('#impK'), 2, 32);
+  const crop = { l: impNum('#impCL'), t: impNum('#impCT'), r: impNum('#impCR'), b: impNum('#impCB') };
+  if (crop.l + crop.r >= imp.iw || crop.t + crop.b >= imp.ih) return;
+  const res = imp.result = convertImage(w, h, k, crop, $('#impCenter').checked);
+
+  // source preview with the grid you've chosen drawn on top
+  const src = $('#impSrc'), scale = Math.min(1, 380 / imp.iw);
+  src.width = Math.round(imp.iw * scale); src.height = Math.round(imp.ih * scale);
+  const sx = src.getContext('2d');
+  sx.drawImage(imp.bitmap, 0, 0, src.width, src.height);
+  const cw = (imp.iw - crop.l - crop.r) / w * scale, ch = (imp.ih - crop.t - crop.b) / h * scale;
+  sx.beginPath();
+  for (let i = 0; i <= w; i += (cw < 3 ? 10 : 1)) { const x = crop.l * scale + i * cw; sx.moveTo(x, crop.t * scale); sx.lineTo(x, src.height - crop.b * scale); }
+  for (let j = 0; j <= h; j += (ch < 3 ? 10 : 1)) { const y = crop.t * scale + j * ch; sx.moveTo(crop.l * scale, y); sx.lineTo(src.width - crop.r * scale, y); }
+  sx.strokeStyle = 'rgba(61,165,255,.7)'; sx.lineWidth = 1; sx.stroke();
+
+  // result preview
+  const out = $('#impOut'), os = Math.max(1, Math.floor(380 / Math.max(w, h)));
+  out.width = w * os; out.height = h * os;
+  const ox = out.getContext('2d');
+  for (let i = 0; i < res.cells.length; i++) { ox.fillStyle = res.palette[res.cells[i]].hex; ox.fillRect((i % w) * os, ((i / w) | 0) * os, os, os); }
+
+  const pal = $('#impPal'); pal.textContent = '';
+  res.palette.forEach((c, i) => {
+    const el = document.createElement('span'); el.className = 'run';
+    el.append(swatch(c.hex), Object.assign(document.createElement('b'), { textContent: res.counts[i].toLocaleString() }), ' ' + c.name);
+    pal.append(el);
+  });
+  $('#impCreate').disabled = false;
+}
+
+// (on submit rather than on close: the click itself is what counts, and close can arrive late)
+dlgImp.querySelector('form').addEventListener('submit', e => {
+  if (!e.submitter || e.submitter.value !== 'ok' || !imp.result) return;
+  const r = imp.result;
+  const p = makeProject({ name: $('#impName').value.trim() || 'Imported pattern', w: r.w, h: r.h, palette: r.palette, cells: r.cells });
+  Object.assign(p.settings, readStyle('imp'));
+  openProject(p);
+  toast('Pattern created. Tidy any stray squares with Paint, or merge colors in the Colors panel.');
+});
+
+// ---------------------------------------------------------------- confirm dialog
+// (window.confirm is blocked in some browsers and embedded views, so use our own)
+const dlgAsk = $('#dlgAsk');
+function ask({ title, message, ok = 'OK', alt = '', danger = false, extra = null }) {
+  $('#askTitle').textContent = title;
+  $('#askMsg').textContent = message;
+  $('#askExtra').replaceChildren(...(extra ? [extra] : []));
+  $('#askOk').textContent = ok;
+  $('#askOk').classList.toggle('danger', danger);
+  $('#askAlt').textContent = alt; $('#askAlt').hidden = !alt;
+  dlgAsk.returnValue = 'cancel';
+  dlgAsk.showModal();
+  return new Promise(res => dlgAsk.addEventListener('close', () => res(dlgAsk.returnValue || 'cancel'), { once: true }));
+}
+
+// ---------------------------------------------------------------- collapsible side panels
+// Remembered per browser; it's only a layout preference.
+function setPanels(collapsed) {
+  const W = cv.clientWidth, H = cv.clientHeight;
+  document.body.classList.toggle('panels-collapsed', collapsed);
+  const b = $('#btnPanels');
+  b.setAttribute('aria-expanded', String(!collapsed));
+  b.querySelector('.arrow').textContent = collapsed ? '‹' : '›';
+  b.querySelector('.label').textContent = collapsed ? 'Show panels' : 'Hide panels';
+  b.title = collapsed ? 'Show the panels again (P)' : 'Hide the panels to give the pattern more room (P)';
+  try { localStorage.setItem('ppk:panels', collapsed ? 'collapsed' : 'open'); } catch { /* ignore */ }
+  // keep the same spot in the middle of the pattern area as it grows or shrinks
+  state.view.ox += (cv.clientWidth - W) / 2; state.view.oy += (cv.clientHeight - H) / 2;
+  requestDraw();
+}
+$('#btnPanels').addEventListener('click', () => setPanels(!document.body.classList.contains('panels-collapsed')));
+try { if (localStorage.getItem('ppk:panels') === 'collapsed') setPanels(true); } catch { /* ignore */ }
+
+// top-bar shortcuts for the Save, back up & share buttons
+for (const b of $$('[data-proxy]')) b.addEventListener('click', () => $('#' + b.dataset.proxy).click());
+
+// on phones the file buttons fold into a "More" menu
+function setMore(open) {
+  $('#fileBtns').classList.toggle('open', open);
+  $('#btnMore').setAttribute('aria-expanded', String(open));
+}
+$('#btnMore').addEventListener('click', () => setMore(!$('#fileBtns').classList.contains('open')));
+$('#fileBtns').addEventListener('click', e => { if (e.target.closest('button')) setMore(false); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#fileBtns, #btnMore')) setMore(false); });
+
+// ---------------------------------------------------------------- clear canvas
+$('#btnClearCanvas').addEventListener('click', async () => {
+  const p = state.p; if (!p) return;
+  // offer the most-used colour first: usually the background
+  const counts = new Array(p.palette.length).fill(0);
+  for (let i = 0; i < p.cells.length; i++) counts[p.cells[i]]++;
+  const order = p.palette.map((c, i) => i).sort((a, b) => counts[b] - counts[a]);
+  const label = document.createElement('label'); label.className = 'field';
+  const sel = document.createElement('select');
+  for (const i of order) sel.append(new Option(p.palette[i].name, i));
+  label.append('Fill every square with', sel);
+  if (await ask({
+    title: 'Clear the whole pattern?',
+    message: 'Every square becomes one color and all ✓ marks are removed. You can undo this with Ctrl+Z.',
+    ok: 'Clear pattern', danger: true, extra: label,
+  }) !== 'ok') return;
+  pushUndo();
+  p.cells.fill(+sel.value); p.done.fill(0); p.row = 0; p.sel = +sel.value;
+  changed(); setRow(0);
+  toast('Pattern cleared');
+});
+
+// ---------------------------------------------------------------- add / delete rows & columns
+const lineMenu = $('#lineMenu');
+function openLineMenu(c, pt) {
+  const p = state.p;
+  lineMenu.dataset.x = c.x; lineMenu.dataset.y = c.y;
+  $('#lineMenuTitle').textContent = `Column ${colU(p, c.x) + 1} from ${fromRight(p) ? 'right' : 'left'} · line ${p.h - c.y} from bottom`;
+  lineMenu.querySelector('[data-line="delCol"]').disabled = p.w < 2;
+  lineMenu.querySelector('[data-line="delRow"]').disabled = p.h < 2;
+  lineMenu.hidden = false;
+  const st = $('#stage').getBoundingClientRect(), mw = lineMenu.offsetWidth, mh = lineMenu.offsetHeight;
+  lineMenu.style.left = clamp(pt.x + 12, 8, st.width - mw - 8) + 'px';
+  lineMenu.style.top = clamp(pt.y + 12, 8, st.height - mh - 8) + 'px';
+  state.lineSel = c; requestDraw();
+}
+function closeLineMenu() { if (!lineMenu.hidden) { lineMenu.hidden = true; state.lineSel = null; requestDraw(); } }
+lineMenu.addEventListener('click', e => {
+  const b = e.target.closest('[data-line]'); if (!b) return;
+  const x = +lineMenu.dataset.x, y = +lineMenu.dataset.y;
+  ({
+    colLeft: () => insertCol(x, x), colRight: () => insertCol(x + 1, x), delCol: () => deleteCol(x),
+    rowAbove: () => insertLine(y, y), rowBelow: () => insertLine(y + 1, y), delRow: () => deleteLine(y),
+  })[b.dataset.line]();
+  closeLineMenu();
+});
+document.addEventListener('pointerdown', e => { if (!lineMenu.hidden && !lineMenu.contains(e.target) && e.target !== cv) closeLineMenu(); });
+
+function clearRow() {
+  const p = state.p; if (!p) return;
+  const order = rowOrder(p, p.row);
+  if (!order.some(i => p.done[i])) return;
+  pushUndo(); order.forEach(i => { p.done[i] = 0; }); afterMark();
+}
+$('#btnClearRow').addEventListener('click', clearRow);
+
+// ---------------------------------------------------------------- paint colour box
+$('#paintColor').addEventListener('input', e => { $('#paintWell').style.background = e.target.value; });
+$('#paintColor').addEventListener('change', e => useColor(e.target.value));
+$('#btnPalPop').addEventListener('click', e => {
+  const pop = $('#palPop');
+  if (!pop.hidden) { pop.hidden = true; return; }
+  renderPalPop();
+  const r = e.currentTarget.getBoundingClientRect();
+  pop.hidden = false;
+  pop.style.top = r.bottom + 6 + 'px';
+  pop.style.left = clamp(r.right - pop.offsetWidth, 8, innerWidth - pop.offsetWidth - 8) + 'px';
+});
+document.addEventListener('pointerdown', e => {
+  const pop = $('#palPop');
+  if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('#btnPalPop')) pop.hidden = true;
+});
+
+// ---------------------------------------------------------------- rows & columns (Pattern settings)
+$('#btnLineTool').addEventListener('click', () => setTool(state.tool === 'lines' ? 'pan' : 'lines'));
+for (const b of $$('[data-edge]')) {
+  b.addEventListener('click', () => {
+    if (!state.p) return;
+    const n = clamp(parseInt($('#edgeN').value, 10) || 1, 1, 500);
+    changeEdge(b.dataset.edge, b.dataset.op === 'add' ? n : -n, +$('#edgeFill').value);
+  });
+}
+
+// ---------------------------------------------------------------- toast
+let toastTimer = 0;
+function toast(msg, bad) {
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, bad ? 6000 : 2600);
+}
+
+// ---------------------------------------------------------------- boot
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
+window.addEventListener('pagehide', saveNow);
+
+setTool('pan');
+const lastId = store.get(KEY_LAST) || (readIndex()[0] || {}).id;
+const start = lastId ? loadProject(lastId) : null;
+if (start) openProject(start); else renderAll();
+
+// exposed for debugging in the console
+window.ppk = { state, convertImage, imp, updateImport };
+})();
+
+</script>
+</body>
+</html>
